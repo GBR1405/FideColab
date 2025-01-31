@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#000000" />
+  <meta name="description" content="Web site created using create-react-app" />
+  <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+  <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+  <title>React App</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+
+<body>
+  <header class="header">
+    <div class="header__title header__title--none">
+      <h1 class="title__text">Texto</h1>
+    </div>
+    <div class="header__profile">
+      <img class="profile__img" src="image/user.png" alt="Usuario">
+      <a class="profile__text">Usuario</a>
+    </div>
+  </header>
+  
+  <nav class="sidebar">
+    <div class="sidebar__top">
+      <div class="top__logo">
+        <img class="logo__img" src="image/logo.png" alt="Logo">
+        <span class="logo__text">Institución</span>
+      </div>
+
+      <div class="top__close">
+        <button id="toggleButton" class="close__btn">
+          <i class="fa-solid fa-angles-left"></i>
+        </button>
+      </div>
+    </div>
+    <ul class="sidebar__list">
+      <li class="list__item list__item--active">
+        <a class="item__area" href="index.html">
+          <i class="fa-regular fa-circle-question"></i>
+          <span class="area__text area__text--active">Centro de ayuda</span>
+        </a>
+      </li>
+      <li class="list__item">
+        <a class="item__area" href="dashboard.html">
+          <i class="fa-solid fa-bell"></i>
+          <span class="area__text">Manual de Usuario</span>
+        </a>
+      </li>
+      <li class="list__item">
+        <a class="item__area" href="calendar.html">
+          <i class="fa-solid fa-chart-simple"></i>
+          <span class="area__text">Tutorial</span>
+        </a>
+      </li>
+      <li class="list__item">
+        <a class="item__area" href="calendar.html">
+          <i class="fa-solid fa-clock-rotate-left"></i>
+          <span class="area__text">Preguntas frecuentes</span>
+        </a>
+      </li>
+    </ul>
+
+    <div class="sidebar__return">
+      <button class="return__btn">
+        <i class="fa-solid fa-square-caret-left"></i>
+        <span class="btn__text">Volver</span>
+      </button>
+    </div>
+  </nav>
+
+  <main class="main">
+    <section class="main__container">
+      <div class="container__navegation">
+        <a class="navegation__text" href="#">Centro de Ayuda</a>
+        <a class="navegation__text navegation__text--active" href="#">/Manual de Usuario</a>
+      </div>
+      <div class="container__content">
+        <h2>Hello World</h2>
+        <p class="content__text">
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Sequi alias odio eius illo autem. Magnam ratione
+          cumque esse quisquam, laborum quas natus! Temporibus dolorum, facilis possimus dolores deserunt itaque
+          recusandae!
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://kit.fontawesome.com/fa4744a987.js" crossorigin="anonymous"></script>
+  <script type="text/javascript">
+    // Función para abrir y cerrar la sidebar
+    document.getElementById("toggleButton").addEventListener("click", function() {
+      const sidebar = document.querySelector('.sidebar');
+      sidebar.classList.toggle('close');
+      this.classList.toggle('rotate');
+    });
+  </script>
+  <script type="text/javascript" src="js/app.js" defer></script>
+</body>
+
+</html>

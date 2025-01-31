@@ -7,13 +7,26 @@ import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css'; // Import default CSS for toastify
 import UserHomeScreen from "./pages/UserHomeScreen";
 
+import './css/helpManual.css';
+import './js/script.js';
+
+
 const Login = lazy(() => import("./pages/Login"));
 const Signup = lazy(() => import("./pages/Signup"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"))
 const ResetPassword = lazy(() => import("./pages/ResetPassword"))
+<<<<<<< Updated upstream
 const HelpManuals = lazy(() => import("./pages/HelpManuals"))
+=======
+const toggleButton = document.querySelector('.top__close');
+const sidebar = document.querySelector('.sidebar');
+>>>>>>> Stashed changes
 
+function toggleSidebar() {
+  sidebar.classList.toggle('close');
+  toggleButton.classList.toggle('rotate');
+}
 const App = () => {
   const location = useLocation();
   const hideHeader = ["/login", "/signup"].includes(location.pathname);
