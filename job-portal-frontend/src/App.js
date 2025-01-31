@@ -16,12 +16,8 @@ const Signup = lazy(() => import("./pages/Signup"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"))
 const ResetPassword = lazy(() => import("./pages/ResetPassword"))
-<<<<<<< Updated upstream
-const HelpManuals = lazy(() => import("./pages/HelpManuals"))
-=======
-const toggleButton = document.querySelector('.top__close');
-const sidebar = document.querySelector('.sidebar');
->>>>>>> Stashed changes
+const helpManual = lazy(() => import("./pages/HelpManual"))
+
 
 function toggleSidebar() {
   sidebar.classList.toggle('close');
