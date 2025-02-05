@@ -72,14 +72,14 @@ const Help = () => {
         </div>
         <div className="header__profile">
           {/* Ícono generado a partir del nombre */}
-          <div 
-            className="profile__img-label" 
+          <div
+            className="profile__img-label"
             style={{ backgroundColor: iconColor }} // Color de fondo aleatorio
             onClick={() => navigate('/profile')} // Redirige a /profile al hacer clic en el ícono
           >
             {userIcon}
           </div>
-          <a 
+          <a
             className="profile__text"
             onClick={() => navigate('/profile')} // Redirige a /profile al hacer clic en el nombre
           >
@@ -144,14 +144,18 @@ const Help = () => {
               Centro de Ayuda
             </a>
             <a className="navegation__text navegation__text--active" href="#">
-              /Manual de Usuario
+
             </a>
           </div>
 
           <div className="container__content">
-            <h2>Hello World</h2>
+            <h2>Centro de Ayuda</h2>
             <p className="content__text">
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. Sequi alias odio eius illo autem. Magnam ratione cumque esse quisquam, laborum quas natus! Temporibus dolorum, facilis possimus dolores deserunt itaque recusandae!
+              En nuestro Centro de Ayuda, hemos reunido todo lo que necesitas para aprovechar al máximo nuestra plataforma. Aquí encontrarás una guía completa y detallada sobre cómo utilizar todas las funcionalidades de la página de manera eficiente. Además, hemos preparado una serie de videos tutoriales que te guiarán paso a paso en el uso de nuestras herramientas, brindándote la posibilidad de aprender de manera visual y práctica.
+
+              Si tienes dudas o preguntas comunes, nuestra sección de Preguntas Frecuentes te ofrecerá respuestas rápidas y claras para resolver los inconvenientes más habituales que nuestros usuarios pueden enfrentar. Estamos comprometidos en brindarte el mejor soporte, asegurándonos de que tu experiencia en la página sea lo más fluida y satisfactoria posible.
+
+              Nuestro objetivo es que, al visitar nuestro Centro de Ayuda, te sientas apoyado y bien informado en todo momento. ¡No dudes en explorar todos nuestros recursos y aprovechar al máximo tu experiencia!
             </p>
           </div>
         </section>

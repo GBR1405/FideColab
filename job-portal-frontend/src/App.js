@@ -8,6 +8,7 @@ import Home from "./pages/Home";
 import UserHomeScreen from "./pages/UserHomeScreen";
 
 
+
 const Login = lazy(() => import("./pages/Login"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Help = lazy(() => import("./pages/Help"));
@@ -17,6 +18,9 @@ const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const EditUser = lazy(() => import("./pages/EditUser"));
 const UserProfile = lazy(() => import("./pages/UserProfile"));
+const HelpManual = lazy(() => import("./pages/HelpManual"));
+const FrequentlyAskedQuiestions = lazy(() => import("./pages/FrequentlyAskedQuiestions"));
+
 
 const App = () => {
   const location = useLocation();
@@ -36,6 +40,9 @@ const App = () => {
           <Route path="/edit-user" element={<EditUser />} />
           <Route path="/user-profile" element={<UserProfile />} />
           <Route path="*" element={<NotFound />} />
+          <Route path="/helpManual" element={<HelpManual />} />
+          <Route path="/frequentlyAskedQuiestions" element={<FrequentlyAskedQuiestions />} />
+
         </Routes>
       </Suspense>
       <ToastContainer

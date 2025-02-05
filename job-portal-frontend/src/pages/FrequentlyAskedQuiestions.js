@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from "react-router-dom";
-import "../styles/helpManual.css";
+import "../styles/frequentlyAskedQuiestions.css";
 
 // Función para obtener el valor de una cookie por su nombre
 const getCookie = (name) => {
@@ -11,9 +11,10 @@ const getCookie = (name) => {
   return null;
 };
 
-const HelpManual = () => {
+const FrequentlyAskedQuiestions = () => {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true); // Estado para controlar la carga de datos
+  const [activeIndex, setActiveIndex] = useState(null); // Estado para manejar la pregunta activa
   const navigate = useNavigate(); // Usar useNavigate en lugar de useHistory
 
   // Cargar userData desde la cookie cuando el componente se monta
@@ -64,6 +65,15 @@ const HelpManual = () => {
 
   const iconColor = getRandomColor(); // Obtener un color aleatorio para el ícono
 
+  // Función para manejar el toggle de las preguntas
+  const handleToggle = (index) => {
+    if (activeIndex === index) {
+      setActiveIndex(null); // Si la misma pregunta se hace clic, se cierra
+    } else {
+      setActiveIndex(index); // De lo contrario, se muestra la pregunta seleccionada
+    }
+  };
+
   return (
     <div className="body">
       <header className="header">
@@ -112,7 +122,7 @@ const HelpManual = () => {
           <li className="list__item list__item--active">
             <a className="item__area" href="helpmanual.html">
               <i className="fa-solid fa-book"></i>
-              <span className="area__text area__text--active">Manual de Usuario</span>
+              <span className="area__text">Manual de Usuario</span>
             </a>
           </li>
           <li className="list__item">
@@ -124,7 +134,7 @@ const HelpManual = () => {
           <li className="list__item">
             <a className="item__area" href="calendar.html">
               <i className="fa-solid fa-clock-rotate-left"></i>
-              <span className="area__text">Preguntas frecuentes</span>
+              <span className="area__text area__text--active">Preguntas frecuentes</span>
             </a>
           </li>
         </ul>
@@ -141,53 +151,80 @@ const HelpManual = () => {
         <section className="main__container">
           <div className="container__navegation">
             <a className="navegation__text" href="#">
-              Centro de Ayuda
+            Centro de Ayuda
             </a>
             <a className="navegation__text navegation__text--active" href="#">
-              /Manual de Usuario
+              /Manual de Usuario/Tutorial/Preguntas Frecuentes
             </a>
           </div>
 
           <div className="container__content">
-            <h2>Manual de Usuario</h2>
+            <h2>Preguntas Frecuentes</h2>
             <p className="content__text">
-              El proyecto consiste en el desarrollo de una plataforma de simulación colaborativa diseñada para mejorar la dinámica del trabajo en equipo en entornos educativos. Esta plataforma permitirá a los estudiantes interactuar de forma dinámica, colaborativa y eficiente en escenarios simulados.
-
-              La herramienta contará con varios módulos, cada uno con funciones específicas:
-
-              •	Módulo de Inicio
-
-              •	Módulo de Instrucciones
-
-              •	Módulo de Simulación
-
-              •	Módulo de Resultados
-
-              •	Módulo de Perfil
-
-              •	Módulo de Historial
-
-              •	Módulo de Administración
-
-              •	Módulo de Configuración/Personalización
-
-              •	Módulo de Estudiante
-
-              •	Módulo de Profesor
-
-              •	Módulo Salir
-
-              Estos módulos permitirán a los usuarios gestionar sus perfiles y tareas, simular situaciones del mundo real donde la colaboración es esencial, y obtener resultados medibles para mejorar el aprendizaje. Además, el sistema incluirá informes periódicos y funciones de personalización para adaptarse a las necesidades específicas de los usuarios.
-
+              Aquí podrás encontrar la lista de preguntas frecuentes del sistema FideColab.
             </p>
+
+            {/* Sección de Preguntas Frecuentes (FAQ) */}
+            <div className="faq__section">
+              {/* Pregunta 1 */}
+              <div className="faq__item">
+                <button className="faq__question" onClick={() => handleToggle(0)}>
+                  ¿Cómo me registro en el sistema?
+                  <i className={`fa-solid ${activeIndex === 0 ? 'fa-chevron-up' : 'fa-chevron-down'}`}></i>
+                </button>
+                {activeIndex === 0 && (
+                  <div className="faq__answer">
+                    <p>Para registrarte, solo debes completar el formulario de registro en la página principal con tus datos básicos como nombre, correo y contraseña.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Pregunta 2 */}
+              <div className="faq__item">
+                <button className="faq__question" onClick={() => handleToggle(1)}>
+                  ¿Olvidé mi contraseña, qué debo hacer?
+                  <i className={`fa-solid ${activeIndex === 1 ? 'fa-chevron-up' : 'fa-chevron-down'}`}></i>
+                </button>
+                {activeIndex === 1 && (
+                  <div className="faq__answer">
+                    <p>Si olvidaste tu contraseña, puedes hacer clic en "¿Olvidaste tu contraseña?" en la página de inicio de sesión y seguir las instrucciones para restablecerla.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Pregunta 3 */}
+              <div className="faq__item">
+                <button className="faq__question" onClick={() => handleToggle(2)}>
+                  ¿Puedo cambiar mi nombre de usuario?
+                  <i className={`fa-solid ${activeIndex === 2 ? 'fa-chevron-up' : 'fa-chevron-down'}`}></i>
+                </button>
+                {activeIndex === 2 && (
+                  <div className="faq__answer">
+                    <p>No es posible cambiar tu nombre de usuario una vez registrado. Sin embargo, puedes actualizar tu información personal desde la configuración de tu cuenta.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Pregunta 4 */}
+              <div className="faq__item">
+                <button className="faq__question" onClick={() => handleToggle(3)}>
+                  ¿Cómo contacto soporte técnico?
+                  <i className={`fa-solid ${activeIndex === 3 ? 'fa-chevron-up' : 'fa-chevron-down'}`}></i>
+                </button>
+                {activeIndex === 3 && (
+                  <div className="faq__answer">
+                    <p>Si necesitas ayuda, puedes contactar con nuestro equipo de soporte técnico enviando un correo a soporte@ejemplo.com o llamando al +1 800 123 4567.</p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </section>
       </main>
-
 
       <script src="https://kit.fontawesome.com/fa4744a987.js" crossOrigin="anonymous"></script>
     </div>
   );
 }
 
-export default HelpManual;
+export default FrequentlyAskedQuiestions;
