@@ -1,17 +1,17 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+import Cookies from "js-cookie";
 import axios from "axios";
 import { toast } from "react-toastify";
-import '../styles/login.css';
+import "../styles/login.css";
 
 
-
+const apiUrl = process.env.REACT_APP_API_URL;
 
 const Login = () => {
   const [correo, setCorreo] = useState("");
   const [contraseña, setContraseña] = useState("");
-  const [errors, setErrors] = useState({});
+  const [setErrors] = useState({});
   const navigate = useNavigate();
 
   const validateForm = () => {
@@ -23,8 +23,6 @@ const Login = () => {
     }
     if (!contraseña) {
       errors.contraseña = "Contraseña es obligatoria";
-    } else if (contraseña.length < 8 || !/[A-Z]/.test(contraseña) || !/\d/.test(contraseña)) {
-      errors.contraseña = "Debe tener al menos 8 caracteres, una mayúscula y un número.";
     }
     return errors;
   };
@@ -38,15 +36,16 @@ const Login = () => {
     }
 
     try {
-      const response = await axios.post("http://localhost:3000/api/auth/login", {
+      const response = await axios.post(`${apiUrl}/auth/login`, {
         correo,
         contraseña,
-      });
+    });    
+    
 
       if (response.data.success) {
         toast.success("Inicio de sesión exitoso!");
         const token = response.data.token;
-        sessionStorage.setItem("authToken", token);
+        Cookies.set("authToken", token, { expires: 1 });
         navigate("/homeScreen");
       } else {
         toast.error(response.data.message || "Error al iniciar sesión");
@@ -59,56 +58,88 @@ const Login = () => {
 
   return (
     <>
-      <header className="header">
-        <img className="header__img" src="../image/logo.png" alt="Logo" />
-        <span className="header__text">Institución</span>
-      </header>
-      <main className="main">
-        <form onSubmit={handleSubmit} className="login-form">
-          <div className="form-group">
-            <label htmlFor="correo">Correo:</label>
-            <input
-              type="email"
-              id="correo"
-              value={correo}
-              onChange={(e) => setCorreo(e.target.value)}
-              className="form-control"
-            />
-            {errors.correo && <span className="error-text">{errors.correo}</span>}
+      <div className="body-login">
+        <header className="header-login">
+          <img className="header__img-login" src="logo.png" alt="" />
+          <span className="header__text-login">FideColab</span>
+        </header>
+        <main className="main-login">
+          <div>
+            <form onSubmit={handleSubmit}>
+              <div className="form__heading-login">
+                <h2 className="heading__title-login">Accede a tu cuenta</h2>
+                <span className="heading__text-login">
+                  Acceda con el usuario que te dio el profesor
+                </span>
+              </div>
+              <div className="form__input-login">
+                <label className="input__label-login" htmlFor="correo">
+                  Correo
+                </label>
+                <input
+                  className="input__shape-login"
+                  type="email"
+                  id="correo"
+                  value={correo}
+                  onChange={(e) => setCorreo(e.target.value)}
+                  placeholder="Ingresa el correo"
+                />
+              </div>
+              <div className="form__input-login">
+                <label className="input__label-login" htmlFor="contraseña">
+                  Contraseña
+                </label>
+                <input
+                  className="input__shape-login"
+                  type="password"
+                  id="contraseña"
+                  value={contraseña}
+                  onChange={(e) => setContraseña(e.target.value)}
+                  placeholder="Contraseña"
+                />
+              </div>
+              <div className="form__check-login">
+                <input className="check__box-login" type="checkbox" id="rememberMe" />
+                <label className="check__text-login" htmlFor="rememberMe">
+                  Recuerda mi contraseña
+                </label>
+              </div>
+              <div className="form__button-login">
+                <button className="button__shape-login" type="submit">
+                  Iniciar sesión
+                </button>
+              </div>
+              <div className="form__link-login">
+                <a className="link__text-login" href="/forgot-password">
+                  ¿Contraseña olvidada?
+                </a>
+              </div>
+              <div className="form__link-login">
+                <a className="link__text-login" href="/test-view">
+                ¿No eres estudiante? Echa un vistazo a la pagina!
+                </a>
+              </div>
+            </form>
           </div>
-          <div className="form-group">
-            <label htmlFor="contraseña">Contraseña:</label>
-            <input
-              type="password"
-              id="contraseña"
-              value={contraseña}
-              onChange={(e) => setContraseña(e.target.value)}
-              className="form-control"
-            />
-            {errors.contraseña && <span className="error-text">{errors.contraseña}</span>}
-          </div>
-          <button type="submit" className="login-button">Iniciar sesión</button>
-        </form>
-      </main>
-      <aside className="aside">
-        <article className="aside__article">
-          <span className="article__quote">“</span>
-          <span className="article__text">
-            El éxito del equipo radica en la colaboración, no en la competencia
-          </span>
-          <span className="article__author">— Anónimo</span>
-          <img className="article__img" src="../image/vector.svg" alt="Imagen ilustrativa" />
-        </article>
-      </aside>
-      <script src="https://kit.fontawesome.com/fa4744a987.js" crossorigin="anonymous"></script>
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-      <link
-        href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
-        rel="stylesheet"
-      />
+        </main>
+        <aside className="aside-login">
+          <article className="aside__article-login">
+            <img className="article__quote-login" src="quote.svg" alt="" />
+            <span className="article__text-login">
+              El éxito del equipo radica en la colaboración, no en la competencia
+            </span>
+            <span className="article__author-login">— Anónimo</span>
+            <img className="article__square-login" src="vector.svg" alt="" />
+          </article>
+        </aside>
+        <script
+          src="https://kit.fontawesome.com/fa4744a987.js"
+          crossOrigin="anonymous"
+        ></script>
+      </div>
     </>
-  );
+);
+
 };
 
 export default Login;

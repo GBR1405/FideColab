@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import Header from "../components/Header";
+import Layout from "../components/Layout";
+import Cookies from "js-cookie";
+
+
+const apiUrl = process.env.REACT_APP_API_URL;
 
 function UserHomeScreen() {
-  const [userData, setUserData] = useState(null); // Cambié el valor inicial a null para tener una validación más fácil
-  const [error, setError] = useState(""); // Para manejar cualquier error
+  const [userData, setUserData] = useState(null);
+  const [error, setError] = useState(""); 
 
   useEffect(() => {
     fetchUserDetails();
@@ -12,32 +16,21 @@ function UserHomeScreen() {
 
   const fetchUserDetails = async () => {
     try {
-      // Recuperar el token desde sessionStorage
-      const token = sessionStorage.getItem("authToken"); 
+      const token = Cookies.get('authToken');
 
       if (!token) {
         setError("User is not logged in");
         return;
       }
 
-      // Hacer la solicitud a la API con el token en la cabecera
-      const response = await axios.get(
-        "http://localhost:3000/api/auth/get-userDetails", // Asegúrate de que esta ruta sea correcta
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await axios.get(`${apiUrl}/auth/get-userDetails`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       if (response.data.success) {
-        // Aquí asumimos que 'user' es el objeto que contiene la información del usuario
-        setUserData(response.data.user); // Seteamos los datos del usuario en el estado
-        let userInfo = {
-          isLoggedIn: true,
-          userData: response.data.user,
-        };
-        sessionStorage.setItem("userData", JSON.stringify(userInfo)); // Guardamos la información del usuario en sessionStorage
+        setUserData(response.data.user);
+        let userInfo = { isLoggedIn: true, userData: response.data.user };
+        document.cookie = `userData=${JSON.stringify(userInfo)}; path=/; max-age=86400`;
       } else {
         setError(response.data.message || "Failed to fetch user details");
       }
@@ -47,29 +40,26 @@ function UserHomeScreen() {
     }
   };
 
-  // Verificamos si hay un error o si los datos del usuario no están cargados aún
+  // Aquí, renderizamos solo cuando los datos estén disponibles.
   if (error) {
     return (
-      <div>
-        <h2>Error: {error}</h2>
-      </div>
+      <Layout userData={null}>
+      </Layout>
     );
   }
 
   if (!userData) {
-    return <div>Loading...</div>; // Cargando mientras se obtiene la información
+    return (
+      <div>Loading...</div> // Puedes mostrar un indicador de carga aquí mientras se obtiene la información
+    );
   }
 
   return (
-    <div>
-      <h2 style={{ textAlign: "center" }}>Welcome to User Home Screen</h2>
-      <div style={{ textAlign: "center" }}>
-        {/* Mostramos la información del usuario según la estructura de datos */}
-        <h2>
-          Name: {userData.name} <br /> Email: {userData.email} <br /> Rol: {userData.rol}
-        </h2>
-      </div>
-    </div>
+    <Layout userData={userData}>
+      <section className="main__container">
+        
+      </section>
+    </Layout>
   );
 }
 

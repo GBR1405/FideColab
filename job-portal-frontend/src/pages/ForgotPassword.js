@@ -1,8 +1,10 @@
 import { useState } from "react";
 import axios from "axios";
-import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import "../styles/login.css";
+
+const apiUrl = process.env.REACT_APP_API_URL;
 
 export default function ForgotPassword() {
     const [email, setEmail] = useState("");
@@ -23,7 +25,7 @@ export default function ForgotPassword() {
       });
   
       try {
-        await axios.post("http://localhost:3000/api/auth/forgot-password", { email });
+        await axios.post(`${apiUrl}/auth/forgot-password`, { email });
         Swal.fire({
           title: 'Correo enviado',
           text: 'Revisa tu bandeja de entrada para continuar con la recuperación de tu contraseña.',
@@ -42,18 +44,51 @@ export default function ForgotPassword() {
     };
   
     return (
-      <div className="container">
-        <h2>Recuperar Contraseña</h2>
-        <form onSubmit={handleSubmit}>
-          <input
-            type="email"
-            placeholder="Correo electrónico"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <button type="submit">Enviar correo</button>
-        </form>
+      <>
+      <div className="body-login">
+      <header className="header-login">
+      <img className="header__img-login" src="logo.png" alt="" />
+      <span className="header__text-login">FideColab</span>   
+        </header>
+        <main className="main-login">
+          <div className="login-right-login">
+            <form onSubmit={handleSubmit} className="login-form-login">
+              <div className="form__heading-login">
+                <h2 className="heading__title-login">Recuperar la contraseña</h2>
+                <span className="heading__text-login">Ingresa el correo para enviar un mensaje de recuperación</span>
+              </div>  
+              <div className="form__input-login">
+                <label className="input__label-login" htmlFor="correo">Correo Electronico</label>
+                <input 
+                  className="input__shape-login" 
+                  type="email" 
+                  id="correo" 
+                  value={email} 
+                  onChange={(e) => setEmail(e.target.value)} 
+                  placeholder="Ingresa el correo Electronico" 
+                />
+              </div>
+              <div className="form__button-login">
+                <button className="button__shape-login" type="submit">Enviar correo</button>
+              </div>
+              <div className="form__link-login">
+                <a className="link__text-login" href="/login">Volver</a>
+              </div>
+            </form>
+          </div>
+        </main>
+        <aside className="aside-login">
+          <article className="aside__article-login">
+            <img className="article__quote-login" src="quote.svg" alt="" />
+            <span className="article__text-login">
+              El éxito del equipo radica en la colaboración, no en la competencia
+            </span>
+            <span className="article__author-login">— Anónimo</span>
+            <img className="article__square-login" src="vector.svg" alt="" />
+          </article>
+        </aside>
+        <script src="https://kit.fontawesome.com/fa4744a987.js" crossOrigin="anonymous"></script>
       </div>
+      </>
     );
   }

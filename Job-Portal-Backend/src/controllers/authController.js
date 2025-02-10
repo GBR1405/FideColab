@@ -150,8 +150,6 @@ export const getUserDetails = async (req, res) => {
     rol: user.Rol // Aquí tenemos el nombre del rol
   };
 
-  console.log("Este es el usuario:", userDetails);
-
     return res.status(200).json({ success: true, user: userDetails });
   } catch (error) {
     console.error("Error fetching user details:", error);
@@ -328,3 +326,113 @@ export const resetPassword = async (req, res) => {
   }
 };
 
+// Función para actualizar los datos del usuario
+export const updateUser = async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[2];
+  console.log('Escucho borroso');
+
+  if (!token) {
+    return res.status(401).json({ success: false, message: "Token not provided" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const usuarioId = decoded.usuarioId;
+
+    if (!usuarioId) {
+      return res.status(401).json({ success: false, message: "Invalid token" });
+    }
+
+    const { nombre, generoId } = req.body;
+    const pool = await poolPromise;
+
+    // Verificar si el usuario existe
+    const userCheck = await pool.request()
+      .input("usuarioId", sql.Int, usuarioId)
+      .query("SELECT * FROM Usuario_TB WHERE Usuario_ID_PK = @usuarioId");
+
+    if (userCheck.recordset.length === 0) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    // Construir la consulta de actualización solo con los campos permitidos
+    let updateFields = [];
+    if (nombre) updateFields.push("Nombre = @nombre");
+    if (generoId) updateFields.push("Genero_ID_FK = @generoId");
+
+    if (updateFields.length === 0) {
+      return res.status(400).json({ success: false, message: "No fields to update" });
+    }
+
+    const updateQuery = `
+      UPDATE Usuario_TB
+      SET ${updateFields.join(", ")}
+      WHERE Usuario_ID_PK = @usuarioId
+    `;
+
+    await pool.request()
+      .input("usuarioId", sql.Int, usuarioId)
+      .input("nombre", sql.NVarChar, nombre || userCheck.recordset[0].Nombre)
+      .input("generoId", sql.Int, generoId || userCheck.recordset[0].Genero_ID_FK)
+      .query(updateQuery);
+
+    return res.status(200).json({ success: true, message: "User updated successfully" });
+
+  } catch (error) {
+    console.error("Error updating user:", error);
+    return res.status(500).json({ success: false, message: "Failed to update user" });
+  }
+};
+
+ 
+// Función para obtener detalles completos del usuario
+export const getFullUserDetails = async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[2];
+ 
+  if (!token) {
+    return res.status(401).json({ success: false, message: "Token not provided" });
+  }
+ 
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const usuarioId = decoded.usuarioId;
+ 
+    if (!usuarioId) {
+      return res.status(401).json({ success: false, message: "Invalid token" });
+    }
+ 
+    const pool = await poolPromise;
+ 
+    // Obtener todos los detalles del usuario, incluyendo género, rol y grupo
+    const result = await pool.request()
+      .input("usuarioId", sql.Int, usuarioId)
+      .query(`
+        SELECT 
+    u.Usuario_ID_PK AS id,
+    u.Nombre AS name,
+    u.Correo AS email,
+    g.Tipo_Genero AS gender,
+    r.Rol AS role,
+    gc.Codigo_Grupo AS groupName
+FROM Usuario_TB u
+JOIN Genero_TB g ON u.Genero_ID_FK = g.Genero_ID_PK
+JOIN Rol_TB r ON u.Rol_ID_FK = r.Rol_ID_PK
+LEFT JOIN GrupoVinculado_TB gv ON u.Usuario_ID_PK = gv.Usuario_ID_FK
+LEFT JOIN GrupoCurso_TB gc ON gv.GrupoCurso_ID_FK = gc.GrupoCurso_ID_PK
+WHERE u.Usuario_ID_PK = @usuarioId;
+
+      `);
+
+      console.log(result);
+ 
+    if (result.recordset.length === 0) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+ 
+    return res.status(200).json({ success: true, user: result.recordset[0] });
+ 
+  } catch (error) {
+    console.error("Error fetching user details:", error);
+    return res.status(500).json({ success: false, message: "Failed to retrieve user details" });
+  }
+};
