@@ -1,0 +1,111 @@
+:root{
+    --blue-sapphire-clr: #2a40bf;
+    --blue-cobalt-clr: #2b3a8c;
+    --blue-royal-clr: #1935ca;
+    --blue-indigo-clr: #140b99;
+    --white-smoke-clr: #fbf9f9;
+    --white-clr: #fffffe;
+    --yellow-clr: #f2cb05;
+    --orange-clr: #f2a007;
+
+    --primary-text-clr: #696F79;
+}
+  
+.main{
+    grid-area: main;
+    padding: 0px 15px 15px 5px;
+}
+
+.main__container{
+    height: 100%;
+    display: grid;
+    grid-template: 
+    "navigation" auto
+    "content" 1fr;
+}
+
+.container__navegation{
+    grid-area: "navigation";
+    padding: 0px 20px;
+}
+
+.navegation__text{
+    text-decoration: none;
+    color: var(--primary-text-clr);
+}
+
+.navegation__text--active{
+    color: var(--blue-royal-clr);
+}
+
+.container__content{
+    grid-area: "content";
+    border: 1px solid var(--line-clr);
+    border-radius: 1em;
+    margin-top: 10px;
+    padding: 20px;
+    background-color: var(--white-clr);
+    box-shadow: 1px 1px 25px 3px rgba(0, 0, 0, 0.05);
+
+    display: grid;
+    grid-template-rows: auto 1fr;
+    gap: 10px;
+    align-items: center;
+}
+
+.content__heading{
+    color: var(--blue-royal-clr);
+    font-size: 18px;
+}
+
+.content__group{
+    width: 1fr;
+    height: 70vh;
+    overflow-y: scroll;
+    padding: 5px 20px 20px 5px;
+
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.content__group::-webkit-scrollbar{
+    width: 12px;
+}
+
+.content__group::-webkit-scrollbar-track{
+    background-color: var(--white-smoke-clr);
+    border-radius: 4px;
+    box-shadow: 0px 2px 8px 0px rgba(0, 0, 0, 0.2);
+}
+
+.content__group::-webkit-scrollbar-thumb{
+    background: var(--blue-royal-clr);
+    border-radius: 4px;
+    box-shadow: 0px 2px 8px 0px rgba(0, 0, 0, 0.2);
+}
+
+.group__video{
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    border-radius: 1em;
+    box-shadow: 0px 2px 8px 0px rgba(0, 0, 0, 0.2);
+}
+
+.video__shape{
+    padding-block: 10px;
+}
+
+.shape__img{
+    max-width: 100%;
+    border-radius: 1em;
+}
+
+.video__title{
+    font-size: 16px;
+}
+
+.video__btn{
+    font-size: 16px;
+}
