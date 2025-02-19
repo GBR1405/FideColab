@@ -20,6 +20,13 @@ const TestView = lazy(() => import("./pages/TestView"));
 const Manual = lazy(() => import("./pages/Manual"));
 const Tutorial = lazy(() => import("./pages/Tutorial"));
 const Preguntasfrecuentes = lazy(() => import("./pages/Questions"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const Historial = lazy(() => import("./pages/Historial"));
+const Reports = lazy(() => import("./pages/Reports"));
+const Depuration = lazy(() => import("./pages/Depuration"));
+const Personalization = lazy(() => import("./pages/Personalization"));
+const Professor = lazy(() => import("./pages/Professor"));
+const Course = lazy(() => import("./pages/Course"));
 
 const App = () => {
   const location = useLocation();
@@ -56,6 +63,13 @@ const App = () => {
           <Route path="/edit-user" element={<EditUser />} />
           <Route path="/user-profile" element={<UserProfile />} />
           <Route path="/test-view" element={<TestView />} />
+          <Route path="/admin-dashboard" element={<AdminDashboard />} />
+          <Route path="/historial" element={<Historial />} />
+          <Route path="/reports" element={<Reports />} />
+          <Route path="/depuration" element={<Depuration />} />
+          <Route path="/personalization" element={<Personalization />} />
+          <Route path="/professor" element={<Professor />} />
+          <Route path="/course" element={<Course />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
