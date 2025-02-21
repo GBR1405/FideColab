@@ -20,6 +20,7 @@ const EditUser = lazy(() => import("./pages/EditUser"));
 const UserProfile = lazy(() => import("./pages/UserProfile"));
 const HelpManual = lazy(() => import("./pages/HelpManual"));
 const FrequentlyAskedQuiestions = lazy(() => import("./pages/FrequentlyAskedQuiestions"));
+const Teacher = lazy(() => import("./pages/Teacher"));
 
 
 const App = () => {
@@ -42,6 +43,7 @@ const App = () => {
           <Route path="*" element={<NotFound />} />
           <Route path="/helpManual" element={<HelpManual />} />
           <Route path="/frequentlyAskedQuiestions" element={<FrequentlyAskedQuiestions />} />
+          <Route path="/teacher" element={<Teacher />} />
 
         </Routes>
       </Suspense>

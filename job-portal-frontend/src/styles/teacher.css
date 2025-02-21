@@ -1,0 +1,52 @@
+.contenedor {
+    max-width: 400px;
+    margin: 0 auto;
+    background: var(--white-clr);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+h2 {
+    text-align: center;
+    color: var(--blue-royal-clr);
+    margin-bottom: 15px;
+    font-size: 1.5rem;
+}
+
+label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: var(--primary-text-clr);
+}
+
+select, button {
+    width: 100%;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    margin-bottom: 15px;
+    font-family: "Poppins", serif;
+}
+
+select {
+    color: var(--primary-text-clr);
+}
+
+button {
+    background: var(--blue-royal-clr);
+    color: var(--white-clr);
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover {
+    background: var(--blue-indigo-clr);
+}
+
+button:focus {
+    outline: none;
+    box-shadow: 0 0 5px var(--blue-royal-clr);
+}
