@@ -1,0 +1,55 @@
+/* Fondo azul y centrar el contenido */
+.error-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #007BFF; /* Azul */
+    text-align: center;
+}
+
+/* Caja blanca centrada */
+.error-box {
+    background-color: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    max-width: 400px;
+    width: 90%;
+}
+
+/* Logo y título alineados */
+.error-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+/* Tamaño del logo */
+.error-logo {
+    width: 50px;
+    height: auto;
+}
+
+/* Título de Fidecola */
+.error-title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+}
+
+/* Mensaje de error */
+.error-warning {
+    font-size: 22px;
+    font-weight: bold;
+    color: #FF5733;
+    margin-bottom: 10px;
+}
+
+/* Texto de advertencia */
+.error-message {
+    font-size: 16px;
+    color: #555;
+}
