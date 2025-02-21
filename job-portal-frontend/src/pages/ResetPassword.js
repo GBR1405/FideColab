@@ -4,6 +4,8 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import "../styles/login.css";
 
+const apiUrl = process.env.REACT_APP_API_URL;
+
 export default function ResetPassword() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -37,7 +39,7 @@ export default function ResetPassword() {
     try {
       console.info(token);
       console.info(newPassword);
-      await axios.post("http://localhost:3000/api/auth/reset-password", { token, newPassword });
+      await axios.post(`${apiUrl}/auth/reset-password`, { token, newPassword });
       toast.success("Contraseña cambiada con éxito");
       navigate("/login");
     } catch (error) {
@@ -50,7 +52,7 @@ export default function ResetPassword() {
     <div className="body-login">
     <header className="header-login">
         <img className="header__img-login" src="logo.png" alt="" />
-        <span className="header__text-login">Institución</span>
+        <span className="header__text-login">FideColab</span>
       </header>
 
       <main className="main-login">

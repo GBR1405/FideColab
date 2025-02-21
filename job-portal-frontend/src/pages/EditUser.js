@@ -1,55 +1,50 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Cookies from "js-cookie";
-import Swal from "sweetalert2"; // Importa SweetAlert2
+import Swal from "sweetalert2";
+import CryptoJS from "crypto-js";
+
+const apiUrl = process.env.REACT_APP_API_URL;
+const secretKey = process.env.REACT_APP_SECRET_KEY; // Cargar la clave secreta desde el .env
 
 function EditUser({ showModal, setShowModal }) {
-  const [userData, setUserData] = useState({
+  const [userInfo, setUserInfo] = useState({
     name: "",
-    gender: "Indefinido", // Valor por defecto
+    gender: "",
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (showModal) {
-      // Al abrir el modal, cargamos la información del usuario
       fetchUserData();
     }
   }, [showModal]);
 
   const fetchUserData = async () => {
-    const token = Cookies.get("authToken");
-    if (!token) {
+    const userInfoCookie = Cookies.get("IFUser_Info");
+    if (!userInfoCookie) {
       setError("Debes iniciar sesión para editar tu perfil.");
       return;
     }
 
     try {
-      const response = await axios.get(
-        "http://localhost:3000/api/auth/user-profile",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (response.data.success) {
-        setUserData({
-          name: response.data.user.name,
-          gender: response.data.user.gender || "Indefinido", // Si no hay género, se asigna "Indefinido"
-        });
-      } else {
-        setError(response.data.message || "No se pudo obtener la información del usuario.");
-      }
+      // Desencriptar la información de la cookie
+      const bytes = CryptoJS.AES.decrypt(userInfoCookie, secretKey);
+      const decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+
+      setUserInfo({
+        name: `${decryptedData.nombre} ${decryptedData.apellido1} ${decryptedData.apellido2}`,
+        gender: decryptedData.genero || "Indefinido",
+      });
     } catch (err) {
-      setError(err.response?.data?.message || "Ocurrió un error al cargar la información.");
+      setError("No se pudo obtener la información del usuario desde la cookie.");
     }
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setUserData((prevData) => ({
+    setUserInfo((prevData) => ({
       ...prevData,
       [name]: value,
     }));
@@ -59,37 +54,64 @@ function EditUser({ showModal, setShowModal }) {
     e.preventDefault();
     setLoading(true);
 
-    const token = Cookies.get("authToken");
-    if (!token) {
+    const userInfoCookie = Cookies.get("IFUser_Info");
+    if (!userInfoCookie) {
       setError("No token provided. Please log in again.");
       setLoading(false);
       return;
     }
 
     try {
+      // Desencriptar la cookie para obtener los datos
+      const bytes = CryptoJS.AES.decrypt(userInfoCookie, secretKey);
+      const userData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+
+      // Verificar si el género ha cambiado
+      if (userInfo.gender === userData.genero) {
+        Swal.fire({
+          title: "Sin cambios",
+          text: "El género no ha cambiado.",
+          icon: "info",
+          confirmButtonText: "Aceptar",
+        });
+        setLoading(false);
+        setShowModal(false);
+        return;
+      }
+
+      // Enviar solo el cambio de género y el correo del usuario desde la cookie
       const response = await axios.post(
-        "http://localhost:3000/api/auth/user-edit",
+        `${apiUrl}/auth/user-edit`,
         {
-          nombre: userData.name,
-          generoId: userData.gender === "Hombre" ? 1 : userData.gender === "Mujer" ? 2 : 3, // Convertir el género a un ID numérico
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          correo: userData.correo,
+          generoId: userInfo.gender === "Hombre" ? 1 : userInfo.gender === "Mujer" ? 2 : 3,
         }
       );
 
       if (response.data.success) {
-        // Muestra un SweetAlert de éxito
+        // Actualizar la cookie con el nuevo género
+        const updatedUserInfo = {
+          ...userData,
+          genero: userInfo.gender,
+        };
+
+        // Eliminar la cookie anterior
+        Cookies.remove("IFUser_Info");
+
+        // Establecer la nueva cookie con los datos actualizados
+        Cookies.set("IFUser_Info", CryptoJS.AES.encrypt(JSON.stringify(updatedUserInfo), secretKey).toString(), {
+          expires: 7,
+          secure: true,
+        });
+
         Swal.fire({
           title: "¡Éxito!",
-          text: "Información actualizada exitosamente",
+          text: "Género actualizado exitosamente",
           icon: "success",
           confirmButtonText: "Aceptar",
         }).then(() => {
           setShowModal(false);
-          window.location.reload(); // Recarga la página para ver los cambios
+          window.location.reload();
         });
       } else {
         setError(response.data.message || "No se pudo actualizar la información.");
@@ -102,7 +124,7 @@ function EditUser({ showModal, setShowModal }) {
   };
 
   const handleCloseModal = () => {
-    setShowModal(false); // Cerrar el modal
+    setShowModal(false);
   };
 
   if (!showModal) return null;
@@ -111,7 +133,6 @@ function EditUser({ showModal, setShowModal }) {
     <>
       <style>
         {`
-          /* Estilo básico para el modal */
           .modal {
             display: flex;
             justify-content: center;
@@ -237,9 +258,10 @@ function EditUser({ showModal, setShowModal }) {
                   type="text"
                   id="name"
                   name="name"
-                  value={userData.name}
+                  value={userInfo.name}
                   onChange={handleChange}
                   required
+                  disabled
                 />
               </div>
               <div className="form-group">
@@ -247,7 +269,7 @@ function EditUser({ showModal, setShowModal }) {
                 <select
                   id="gender"
                   name="gender"
-                  value={userData.gender}
+                  value={userInfo.gender}
                   onChange={handleChange}
                   required
                 >

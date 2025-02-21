@@ -1,26 +1,29 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { poolPromise } from "../config/db.js"; 
-import UserModel from "../models/userModel.js";
-import authService from '../services/authService.js'; 
+import UserModel from "../models/userModel.js"; 
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 import sql from "mssql";
+import { generatePath } from "react-router-dom";
 
 
 // Función para registrar un nuevo usuario
 export const register = async (req, res) => {
-  const { nombre, correo, contraseña, rolId, generoId} = req.body;
+  const { nombre, apellido1, apellido2, correo, contraseña, rolId, generoId } = req.body;
 
-  if (!nombre || !correo || !contraseña || !rolId || !generoId) {
+  // Validar los campos requeridos
+  if (!nombre || !apellido1 || !apellido2 || !correo || !contraseña || !rolId || !generoId) {
     return res.status(400).json({ success: false, message: "All fields are required" });
   }
 
   try {
-    const pool = await poolPromise; 
+    const pool = await poolPromise;
+
+    // Verificar si el usuario ya existe
     const result = await pool.request()
       .input("correo", correo)
-      .query("SELECT * FROM Usuario_TB WHERE Correo = @correo");
+      .query("SELECT 1 FROM Usuario_TB WHERE Correo = @correo");
 
     if (result.recordset.length > 0) {
       return res.status(400).json({ success: false, message: "User already exists" });
@@ -32,17 +35,21 @@ export const register = async (req, res) => {
     // Insertar el nuevo usuario en la base de datos
     await pool.request()
       .input("nombre", nombre)
+      .input("apellido1", apellido1)
+      .input("apellido2", apellido2)
       .input("correo", correo)
       .input("contraseña", hashedPassword)
       .input("rolId", rolId)
       .input("generoId", generoId)
       .query(`
-        INSERT INTO Usuario_TB (Nombre, Correo, Contraseña, Rol_ID_FK, Genero_ID_FK)
-        VALUES (@nombre, @correo, @contraseña, @rolId, @generoId)
+        INSERT INTO Usuario_TB (Nombre, Apellido1, Apellido2, Correo, Contraseña, Rol_ID_FK, Genero_ID_FK, Estado)
+        VALUES (@nombre, @apellido1, @apellido2, @correo, @contraseña, @rolId, @generoId, 1)
       `);
 
     const newUser = new UserModel({
       nombre,
+      apellido1,
+      apellido2,
       correo,
       contraseña: hashedPassword,
       rolId,
@@ -56,134 +63,94 @@ export const register = async (req, res) => {
   }
 };
 
+dotenv.config();
+
 // Función para iniciar sesión (login) de un usuario
 export const login = async (req, res) => {
   const { correo, contraseña } = req.body;
 
-  // Validar los campos requeridos
   if (!correo || !contraseña) {
     return res.status(400).json({ success: false, message: "Email and password are required" });
   }
 
   try {
-    const pool = await poolPromise; // Esperar la conexión a la base de datos
+    const pool = await poolPromise;
 
-    // Buscar al usuario en la base de datos
+    // Buscar al usuario
     const result = await pool.request()
-      .input("correo", correo)
-      .query("SELECT * FROM Usuario_TB WHERE Correo = @correo");
+      .input("correo", sql.VarChar, correo)
+      .query(`
+        SELECT u.Usuario_ID_PK, u.Contraseña, u.Nombre, u.Apellido1, u.Apellido2, u.Correo, 
+               r.Rol, u.Estado, g.Tipo_Genero AS Genero
+        FROM Usuario_TB u
+        JOIN Rol_TB r ON u.Rol_ID_FK = r.Rol_ID_PK
+        JOIN Genero_TB g ON u.Genero_ID_FK = g.Genero_ID_PK
+        WHERE u.Correo = @correo
+      `);
 
     if (result.recordset.length === 0) {
-      return res.status(401).json({ success: false, message: "Invalid credentials" });
+      return res.status(401).json({ success: false, message: "Credenciales no validas" });
     }
 
     const user = result.recordset[0];
 
-    // Comparar las contraseñas
-    const isMatch = await bcrypt.compare(contraseña, user.Contraseña);
-    if (!isMatch) {
-      return res.status(401).json({ success: false, message: "Invalid credentials" });
+    if (user.Estado !== true) {
+      return res.status(403).json({ success: false, message: "Su cuenta no está disponible. Contacte al administrador." });
     }
 
-    // Crear el token JWT 
-    const token = jwt.sign({ usuarioId: user.Usuario_ID_PK }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    // Comparar contraseñas
+    const isMatch = await bcrypt.compare(contraseña, user.Contraseña);
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: "Credenciales no validas" });
+    }
 
+    // Enviar solo la información necesaria al frontend
     return res.status(200).json({
       success: true,
       message: "Login successful",
-      token: `Bearer ${token}`,
+      user: {
+        id: user.Usuario_ID_PK,
+        nombre: user.Nombre,
+        apellido1: user.Apellido1,
+        apellido2: user.Apellido2,
+        correo: user.Correo,
+        genero: user.Genero,
+        rol: user.Rol,
+      }
     });
+
   } catch (error) {
     console.error("Error logging in user:", error);
     return res.status(500).json({ success: false, message: "Login failed. Please try again later." });
   }
 };
 
-// Función para obtener detalles del usuario desde el token
-export const getUserDetails = async (req, res) => {
-  const token = req.headers.authorization?.split(' ')[2]; // Extraer el token de la cabecera Authorization
-
-  if (!token) {
-    return res.status(401).json({ success: false, message: "Token not provided :(" });
-  }
-
-  console.log("Este es el token:", token);
-
-  try {
-    // Verificar y decodificar el token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    if (!decoded.usuarioId) {
-      return res.status(401).json({ success: false, message: "Invalid token, usuarioId not found" });
-    }
-
-    const pool = await poolPromise; // Esperar la conexión a la base de datos
-
-    // Obtener el usuario por el ID del token
-    const result = await pool.request()
-    .input("usuarioId", decoded.usuarioId)
-    .query(`
-      SELECT 
-        u.Usuario_ID_PK, 
-        u.Nombre, 
-        u.Correo, 
-        r.Rol AS Rol
-      FROM 
-        Usuario_TB u
-      JOIN 
-        Rol_TB r ON u.Rol_ID_FK = r.Rol_ID_PK
-      WHERE 
-        u.Usuario_ID_PK = @usuarioId
-    `);
-
-  if (result.recordset.length === 0) {
-    return res.status(404).json({ success: false, message: "User not found" });
-  }
-
-  const user = result.recordset[0];
-
-  // Mapear los datos del usuario
-  const userDetails = {
-    id: user.Usuario_ID_PK,
-    name: user.Nombre,
-    email: user.Correo,
-    rol: user.Rol // Aquí tenemos el nombre del rol
-  };
-
-    return res.status(200).json({ success: true, user: userDetails });
-  } catch (error) {
-    console.error("Error fetching user details:", error);
-    return res.status(500).json({ success: false, message: "Failed to retrieve user details" });
-  }
-};
 
 
+// Configuracion de Recuperar Contraseña
+dotenv.config(); 
 
-
-
-dotenv.config(); // Cargar las variables de entorno desde el archivo .env
-
-// Crear el transporter para nodemailer con la configuración de Gmail
 const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST, // smtp.gmail.com
-  port: 587, // 587
-  secure: false,  // Usar TLS
+  host: process.env.EMAIL_HOST, 
+  port: 587, 
+  secure: false,  
   auth: {
-    user: process.env.EMAIL_USER,  // Tu dirección de correo de Gmail
-    pass: process.env.EMAIL_PASS,  // La contraseña de la cuenta de correo (App password si tienes 2FA)
+    user: process.env.EMAIL_USER,  
+    pass: process.env.EMAIL_PASS,  
   },
   tls: {
-    rejectUnauthorized: false,  // Permite conexiones TLS aunque el certificado no sea verificado
+    rejectUnauthorized: false, 
   },
 });
 
+
+//Contraseña Olvidada
 export const forgotPassword = async (req, res) => {
   const { email } = req.body;
 
   try {
-    const pool = await poolPromise; // Esperar la conexión a la base de datos
+    const pool = await poolPromise; 
 
-    // Buscar al usuario en la base de datos usando SQL
     const result = await pool.request()
       .input("correo", email)
       .query("SELECT * FROM Usuario_TB WHERE Correo = @correo");
@@ -192,9 +159,7 @@ export const forgotPassword = async (req, res) => {
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
 
-    const user = result.recordset[0]; // Obtener el primer usuario encontrado
-
-    // Generar un token con expiración de 15 minutos
+    const user = result.recordset[0]; 
     const token = jwt.sign({ id: user.Usuario_ID_PK }, process.env.JWT_SECRET, { expiresIn: "15m" });
 
     // Construir el enlace de recuperación
@@ -328,54 +293,51 @@ export const resetPassword = async (req, res) => {
 
 // Función para actualizar los datos del usuario
 export const updateUser = async (req, res) => {
-  const token = req.headers.authorization?.split(' ')[2];
-  console.log('Escucho borroso');
+  // Obtener el correo y el género desde el cuerpo de la solicitud
+  const { correo, generoId } = req.body;
 
-  if (!token) {
-    return res.status(401).json({ success: false, message: "Token not provided" });
+  if (!correo) {
+    return res.status(400).json({ success: false, message: "Correo is required" });
   }
 
+  if (!generoId) {
+    return res.status(400).json({ success: false, message: "Genero ID is required" });
+  }
+
+  const pool = await poolPromise;
+
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const usuarioId = decoded.usuarioId;
-
-    if (!usuarioId) {
-      return res.status(401).json({ success: false, message: "Invalid token" });
-    }
-
-    const { nombre, generoId } = req.body;
-    const pool = await poolPromise;
-
-    // Verificar si el usuario existe
+    // Verificar si el usuario existe en la base de datos con el correo proporcionado
     const userCheck = await pool.request()
-      .input("usuarioId", sql.Int, usuarioId)
-      .query("SELECT * FROM Usuario_TB WHERE Usuario_ID_PK = @usuarioId");
+      .input("correo", sql.VarChar, correo) // Usamos el correo para buscar al usuario
+      .query("SELECT * FROM Usuario_TB WHERE Correo = @correo");
 
     if (userCheck.recordset.length === 0) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    // Construir la consulta de actualización solo con los campos permitidos
+    // Crear una lista de campos a actualizar
     let updateFields = [];
-    if (nombre) updateFields.push("Nombre = @nombre");
     if (generoId) updateFields.push("Genero_ID_FK = @generoId");
 
     if (updateFields.length === 0) {
       return res.status(400).json({ success: false, message: "No fields to update" });
     }
 
+    // Consulta de actualización
     const updateQuery = `
       UPDATE Usuario_TB
       SET ${updateFields.join(", ")}
-      WHERE Usuario_ID_PK = @usuarioId
+      WHERE Correo = @correo
     `;
 
+    // Ejecutar la consulta de actualización
     await pool.request()
-      .input("usuarioId", sql.Int, usuarioId)
-      .input("nombre", sql.NVarChar, nombre || userCheck.recordset[0].Nombre)
-      .input("generoId", sql.Int, generoId || userCheck.recordset[0].Genero_ID_FK)
+      .input("correo", sql.VarChar, correo) // Actualizamos usando el correo
+      .input("generoId", sql.Int, generoId)
       .query(updateQuery);
 
+    // Responder con éxito
     return res.status(200).json({ success: true, message: "User updated successfully" });
 
   } catch (error) {
@@ -383,6 +345,7 @@ export const updateUser = async (req, res) => {
     return res.status(500).json({ success: false, message: "Failed to update user" });
   }
 };
+
 
  
 // Función para obtener detalles completos del usuario
@@ -414,12 +377,12 @@ export const getFullUserDetails = async (req, res) => {
     g.Tipo_Genero AS gender,
     r.Rol AS role,
     gc.Codigo_Grupo AS groupName
-FROM Usuario_TB u
-JOIN Genero_TB g ON u.Genero_ID_FK = g.Genero_ID_PK
-JOIN Rol_TB r ON u.Rol_ID_FK = r.Rol_ID_PK
-LEFT JOIN GrupoVinculado_TB gv ON u.Usuario_ID_PK = gv.Usuario_ID_FK
-LEFT JOIN GrupoCurso_TB gc ON gv.GrupoCurso_ID_FK = gc.GrupoCurso_ID_PK
-WHERE u.Usuario_ID_PK = @usuarioId;
+    FROM Usuario_TB u
+      JOIN Genero_TB g ON u.Genero_ID_FK = g.Genero_ID_PK
+      JOIN Rol_TB r ON u.Rol_ID_FK = r.Rol_ID_PK
+      LEFT JOIN GrupoVinculado_TB gv ON u.Usuario_ID_PK = gv.Usuario_ID_FK
+      LEFT JOIN GrupoCurso_TB gc ON gv.GrupoCurso_ID_FK = gc.GrupoCurso_ID_PK
+    WHERE u.Usuario_ID_PK = @usuarioId;
 
       `);
 

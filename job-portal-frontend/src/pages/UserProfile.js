@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+
+const apiUrl = process.env.REACT_APP_API_URL;
  
 function UserProfile() {
   const [user, setUser] = useState(null);
@@ -18,7 +20,7 @@ function UserProfile() {
       }
  
       const response = await axios.get(
-        "http://localhost:3000/api/auth/user-profile",
+        `${apiUrl}/auth/user-profile`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

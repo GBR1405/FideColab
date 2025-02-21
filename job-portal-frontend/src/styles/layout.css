@@ -59,6 +59,7 @@ html{
 
 .title__text{
   font-size: 24px;
+  cursor: pointer;
 }
 
 .header__profile{
@@ -66,10 +67,12 @@ html{
   width: 200px;
   justify-content: space-evenly;
   align-items: center;
+  cursor: pointer;
 }
 
 .profile__img{    
   width: 50px;
+  cursor: pointer;
 }
 
 .sidebar{
@@ -120,6 +123,7 @@ html{
   font-size: 18px;
   font-weight: bold;
   color: var(--blue-royal-clr);
+  cursor: pointer;
 }
 
 .top__close{
@@ -407,17 +411,22 @@ html{
 }
 
 .profile__img-label {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
   display: flex;
-  align-items: center;
   justify-content: center;
-  color: #fff;
-  font-size: 18px;
+  align-items: center;
+  border-radius: 50%;
+  width: 40px; 
+  height: 40px; 
+  min-width: 40px; 
+  max-width: 60px; 
+  font-size: 18px; 
+  color: #fff; 
   font-weight: bold;
   text-transform: uppercase;
+  overflow: hidden;
+  text-align: center;
 }
+
 
 .profile__text {
   margin-left: 10px;

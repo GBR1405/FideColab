@@ -7,14 +7,14 @@ import fallbackThumbnail from "../image/fallback-thumbnail.jpg"; // Imagen por d
 
 const videos = [
   {
-    id: "YAgJ9XugGBo",
+    id: "9pDH4rnKilU",
     title: "¿Qué es FideColab?",
     url: "https://youtu.be/YAgJ9XugGBo?si=X_tLSoRUWVgKzrKI",
   },
   {
-    id: "A5CwmEayPxw",
-    title: "Taste Eat",
-    url: "https://youtu.be/A5CwmEayPxw",
+    id: "EojIsPdkYno",
+    title: "StemCenter",
+    url: "https://www.youtube.com/watch?v=EojIsPdkYno",
   },
   {
     id: "GwzegAR65dQ",

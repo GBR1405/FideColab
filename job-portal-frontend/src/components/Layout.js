@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // Cambiar useHistory por useNavigate
+import { useNavigate } from 'react-router-dom';
+import CryptoJS from 'crypto-js';
 import '../styles/layout.css';
 import "../styles/animationRecharge.css";
 
@@ -7,29 +8,47 @@ import "../styles/animationRecharge.css";
 const getCookie = (name) => {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
-
   if (parts.length === 2) return parts.pop().split(';').shift();
   return null;
 };
 
 const Layout = ({ children }) => {
   const [userData, setUserData] = useState(null);
-  const [loading, setLoading] = useState(true); // Estado para controlar la carga de datos
-  const navigate = useNavigate(); // Usar useNavigate en lugar de useHistory
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
-  // Cargar userData desde la cookie cuando el componente se monta
+  // Clave de desencriptado obtenida desde el archivo .env
+  const decryptionKey = process.env.REACT_APP_SECRET_KEY;
+
+  // Cargar userData desde la cookie al montar el componente
   useEffect(() => {
-    const cookieData = getCookie('userData');
-    if (cookieData) {
-      console.log("Cookie encontrada:", cookieData);
-      setUserData(JSON.parse(cookieData));
+    const token = getCookie('IFUser_Info');
+
+    if (token) {
+      try {
+        // Desencriptar la cookie
+        const bytes = CryptoJS.AES.decrypt(token, decryptionKey);
+        const decryptedData = bytes.toString(CryptoJS.enc.Utf8);
+
+        if (decryptedData) {
+          const parsedToken = JSON.parse(decryptedData);
+
+          const fullName = `${parsedToken.nombre} ${parsedToken.apellido1} ${parsedToken.apellido2}`;
+          setUserData({
+            nombreCompleto: fullName,
+            rol: parsedToken.rol
+          });
+        }
+      } catch (error) {
+        console.error('Error al desencriptar o parsear la cookie:', error);
+      }
     }
-    setLoading(false); // Al terminar de cargar, setear loading a false
+    setLoading(false);
   }, []);
 
   // Función para generar un ícono con las primeras dos letras del nombre
   const getUserIcon = (name) => {
-    if (!name) return 'NA'; // Si no hay nombre, se coloca "NA"
+    if (!name) return 'NA';
     const initials = name.split(' ').map(word => word.charAt(0).toUpperCase()).slice(0, 2).join('');
     return initials;
   };
@@ -46,57 +65,44 @@ const Layout = ({ children }) => {
 
   // Función para cerrar sesión
   const handleLogout = () => {
-    document.cookie = 'authToken=;expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
-    document.cookie = 'userData=;expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/'; 
-    navigate('/login'); 
+    document.cookie = 'IFUser_Token=;expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
+    document.cookie = 'IFUser_Info=;expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';  // Limpiar la cookie de usuario también
+    navigate('/login');
   };
 
-  // Mientras los datos se están cargando, mostrar un loader o spinner
   if (loading) {
-    return (
-      <div className="loading-screen">Cargando...</div>
-    );
+    return <div className="loading-screen">Cargando...</div>;
   }
 
   // Generar el ícono usando las primeras dos letras del nombre
-  const userIcon = userData && userData.userData && userData.userData.name
-    ? getUserIcon(userData.userData.name)
-    : 'NA';  // Si no hay nombre, se utiliza 'NA'
-
-  const iconColor = getRandomColor(); // Obtener un color aleatorio para el ícono
+  const userIcon = userData?.nombreCompleto ? getUserIcon(userData.nombreCompleto) : 'NA';
+  const iconColor = getRandomColor();
 
   return (
     <div className="body">
       <header className="header">
         <div className="header__title header__title--none">
-          <h1 className="title__text" onClick={() => navigate('/userhome')}>FideColab</h1> {/* Redirige a /userhome */}
+          <h1 className="title__text" onClick={() => navigate('/userhome')}>FideColab</h1>
         </div>
         <div className="header__profile">
           <div 
             className="profile__img-label" 
-            style={{ backgroundColor: iconColor }} // Color de fondo aleatorio
-            onClick={() => navigate('/profile')} // Redirige a /profile al hacer clic en el ícono
+            style={{ backgroundColor: iconColor }}
+            onClick={() => navigate('/profile')}
           >
             {userIcon}
           </div>
-          <a 
-            className="profile__text"
-            onClick={() => navigate('/profile')} // Redirige a /profile al hacer clic en el nombre
-          >
-            {userData ? userData.userData.name : 'Cargando...'}
+          <a className="profile__text" onClick={() => navigate('/profile')}>
+            {userData?.nombreCompleto || 'Cargando...'}
           </a>
         </div>
       </header>
+
       <nav className="sidebar">
         <div className="sidebar__top">
           <div className="top__logo">
             <img className="logo__img" src="logo.png" alt="" />
-            <span 
-              className="logo__text"
-              onClick={() => navigate('/homeScreen')} // Redirige a /homeScreen al hacer clic en el logo
-            >
-              FideColab
-            </span>
+            <span className="logo__text" onClick={() => navigate('/homeScreen')}>FideColab</span>
           </div>
           <div className="top__close">
             <button className="close__btn">
@@ -104,6 +110,7 @@ const Layout = ({ children }) => {
             </button>
           </div>
         </div>
+
         <ul className="sidebar__list">
           <li className="list__item list__item--active">
             <a className="item__area" href="#">
@@ -111,9 +118,9 @@ const Layout = ({ children }) => {
               <span className="area__text area__text--active">Inicio</span>
             </a>
           </li>
-          
+
           {/* Opciones para Estudiantes */}
-          {userData && userData.userData.rol === 'Estudiante' && (
+          {userData?.rol === 'Estudiante' && (
             <>
               <li className="list__item">
                 <a className="item__area" href="#">
@@ -131,7 +138,7 @@ const Layout = ({ children }) => {
           )}
 
           {/* Opciones para Profesores */}
-          {userData && userData.userData.rol === 'Profesor' && (
+          {userData?.rol === 'Profesor' && (
             <>
               <li className="list__item">
                 <a className="item__area" href="#">
@@ -154,11 +161,12 @@ const Layout = ({ children }) => {
             </>
           )}
         </ul>
+
         <div className="sidebar__buttom">
           <img 
             className="buttom__img" 
             src="help.png" 
-            alt="texto" 
+            alt="Ayuda" 
             onClick={() => navigate('/help')} 
             style={{ cursor: 'pointer' }} 
           />
@@ -168,9 +176,11 @@ const Layout = ({ children }) => {
           </button>
         </div>
       </nav>
+
       <main className="main">
         {children}
       </main>
+
       <script src="https://kit.fontawesome.com/fa4744a987.js" crossOrigin="anonymous"></script>
       <script type="text/javascript" src="js/app.js" defer></script>
     </div>

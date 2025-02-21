@@ -28,7 +28,7 @@ const Questions = () => {
                 ¿Cómo me registro en el sistema?
               </summary>
               <p className="faq__text">
-                Para registrarte, completa el formulario de registro con tu nombre, correo y contraseña.
+                Al ser un sistema privado, un usuario comun no se puede registrar, el registro se genera desde el profesor cual los carga.
               </p>
             </details>
             <details className="faq__box">
@@ -60,7 +60,8 @@ const Questions = () => {
                 ¿Qué puedo hacer si en una partida se me va la conexión?
               </summary>
               <p className="faq__text">
-                Deberás ponerte en contacto con tu respectivo profesor para que te permita volver a la partida.
+                Por su parte segun el avance es posible volver a conectarse, por otra parte cabe la posibilidad que tengas que esperar hasta que
+                finalice.
               </p>
             </details>
             <details className="faq__box">
@@ -68,7 +69,7 @@ const Questions = () => {
                 ¿No pasa nada si no me conecto a una partida?
               </summary>
               <p className="faq__text">
-                No, no pasa nada. Solo que no podrás participar en la partida.
+                No, no pasa nada. Sera eleccion del profesor que hará.
               </p>
             </details>
             <details className="faq__box">
@@ -100,7 +101,7 @@ const Questions = () => {
                 ¿Todo lo que dibujé se queda guardado?
               </summary>
               <p className="faq__text">
-                No, una vez que la partida termina, todo se borra.
+                Solo al finalizar la partida, podras guardarlo, al salirte, el dibujo se borra.
               </p>
             </details>
           </div>
