@@ -27,6 +27,9 @@ const Depuration = lazy(() => import("./pages/Depuration"));
 const Personalization = lazy(() => import("./pages/Personalization"));
 const Professor = lazy(() => import("./pages/Professor"));
 const Course = lazy(() => import("./pages/Course"));
+const ProfessorProfile = lazy(() => import("./pages/ProfessorProfile"));
+const FilterPersonalization = lazy(() => import("./pages/FilterPersonalization"));
+const CreatePersonalization = lazy(() => import("./pages/CreatePersonalization"));
 
 const App = () => {
   const location = useLocation();
@@ -70,6 +73,9 @@ const App = () => {
           <Route path="/personalization" element={<Personalization />} />
           <Route path="/professor" element={<Professor />} />
           <Route path="/course" element={<Course />} />
+          <Route path="/professor-profile" element={<ProfessorProfile />} />
+          <Route path="/filter-personalization" element={<FilterPersonalization />} />
+          <Route path="/create-personalization" element={<CreatePersonalization />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
