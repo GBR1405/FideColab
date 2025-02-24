@@ -666,3 +666,189 @@
 
 
 }
+
+/* Pantalla Estudiantes de Profesor */
+
+.student__container{
+    border: 1px solid var(--line-clr);
+    border-radius: 1em;
+    padding: 20px 40px;
+    background-color: var(--white-clr);
+    box-shadow: 1px 1px 25px 3px rgba(0, 0, 0, 0.05);
+    height: 100%;
+
+    display: grid;
+    grid-template-rows: 5% 5% 90%;
+
+    input, button{
+        appearance: none;
+        all: unset;
+        border: none;
+        background: none;
+        outline: none;
+        width: 90%;
+        height: 100%;
+    }
+
+    .container__title{
+        justify-self: flex-start;
+        align-self: center;
+        color: var(--blue-royal-clr);
+    }
+
+    .container__description{
+        align-self: center;
+        font-size: 0.9vw;
+        font-weight: 500;
+    }
+
+    .container__content{
+        display: grid;
+        grid-template-columns: 68% 30%;
+        gap: 2%;
+        align-items: center;
+    }
+
+    .content__box{
+        background-color: var(--white-smoke-clr);
+        box-shadow: 0px 2px 5px 2px rgba(0, 0, 0, 0.06);
+        height: 95%;
+        width: 100%;   
+        border-radius: 1em;
+    
+        display: grid;
+        grid-template-rows: 12% 74% 14%;
+    }
+
+    .box__title{
+        background-color: var(--blue-royal-clr);
+        box-shadow: 0px 4px 4px 1px rgba(0, 0, 0, 0.06);
+        border-radius: 1em 1em 0px 0px;
+        font-size: 1vw;
+        font-weight: 600;
+        color: white;
+    
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .box__table{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding-right: 2%;
+    }
+
+    .table__data{
+        width: 100%;
+        height: 45vh;
+        overflow-y: scroll;
+        padding: 2%;
+    }
+
+    .table__data::-webkit-scrollbar{
+        width: 12px;
+    }
+    
+    .table__data::-webkit-scrollbar-track{
+        background-color: var(--white-smoke-clr);
+        border-radius: 4px;
+        box-shadow: 0px 2px 8px 0px rgba(0, 0, 0, 0.1);
+    }
+    
+    .table__data::-webkit-scrollbar-thumb{
+        background: var(--blue-royal-clr);
+        border-radius: 4px;
+        box-shadow: 0px 2px 8px 0px rgba(0, 0, 0, 0.1);
+    }
+
+    .box__bottom{
+        box-shadow: 0px -4px 4px 1px rgba(0, 0, 0, 0.04);
+        border-radius: 0px 0px 1em 1em;
+        font-weight: 600;
+    
+        display: flex;
+        align-items: center;
+        justify-content: space-evenly;
+    }
+
+    .bottom__button{
+        height: 70%;
+        width: 12vw;
+        background-color: var(--yellow-clr);
+        box-shadow: 0px 4px 4px 1px rgba(0, 0, 0, 0.06);
+        border-radius: 5px;
+        cursor: pointer;
+        text-align: center;
+        font-size: 0.9vw;
+        font-weight: 600;
+        color: white;
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .bottom__button:hover{
+        background-color: var(--dark-yellow-clr);
+    }
+
+    .box__filter{
+        display: grid;
+        grid-template-rows: 60% 40%;
+        height: 100%;
+        padding: 10% 5%;
+    }
+
+    .filter__text{
+        display: flex;
+        flex-direction: column;
+        gap: 10%;
+    }
+
+    .text__shape{
+        color: var(--blue-royal-clr);
+        font-size: 0.9vw;
+        font-weight: 600;
+
+        display: flex;
+        flex-direction: column;
+        gap: 0.5vh;
+    }
+
+    .shape__input{
+        background-color: white;  
+        padding-inline: 5%;
+        height: 4vh;
+        box-shadow: 0px 2px 5px 1px rgba(0, 0, 0, 0.06);
+        border-radius: 5px;
+        cursor: text;
+        color: var(--primary-text-clr);
+        font-size: 0.7vw;
+        font-weight: 500;
+    }
+
+    .box__button{
+        justify-self: center;
+        align-self: flex-end;
+        height: 6vh;
+        width: 9vw;
+        background-color: var(--yellow-clr);
+        box-shadow: 0px 4px 4px 1px rgba(0, 0, 0, 0.06);
+        border-radius: 5px;
+        cursor: pointer;
+        text-align: center;
+        font-size: 0.9vw;
+        font-weight: 600;
+        color: white;
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .box__button:hover{
+        background-color: var(--dark-yellow-clr);
+    }
+}

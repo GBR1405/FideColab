@@ -29,6 +29,7 @@ const Professor = lazy(() => import("./pages/Professor"));
 const AdminProfessorCourses = lazy(() => import("./pages/AdminProfessorCourses"));
 const Course = lazy(() => import("./pages/Course"));
 const ProfessorProfile = lazy(() => import("./pages/ProfessorProfile"));
+const ProfessorStudents = lazy(() => import("./pages/ProfessorStudents"));
 const FilterPersonalization = lazy(() => import("./pages/FilterPersonalization"));
 const CreatePersonalization = lazy(() => import("./pages/CreatePersonalization"));
 
@@ -76,6 +77,7 @@ const App = () => {
           <Route path="/admin-professor-courses" element={<AdminProfessorCourses />} />
           <Route path="/course" element={<Course />} />
           <Route path="/professor-profile" element={<ProfessorProfile />} />
+          <Route path="/professor-students" element={<ProfessorStudents />} />
           <Route path="/filter-personalization" element={<FilterPersonalization />} />
           <Route path="/create-personalization" element={<CreatePersonalization />} />
           <Route path="*" element={<NotFound />} />
