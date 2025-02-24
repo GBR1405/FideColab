@@ -6,6 +6,7 @@ import "datatables.net-dt/css/jquery.dataTables.css";
 import "datatables.net";
 import axios from "axios";
 
+// Componente para subir archivos
 const SubirArchivo = () => {
     const [archivo, setArchivo] = useState(null);
 
@@ -15,7 +16,7 @@ const SubirArchivo = () => {
         formData.append("archivo", archivo);
 
         try {
-            const response = await axios.post("/api/profesores/subir", formData, {
+            const response = await axios.post("/api/usuarios/subir", formData, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
             alert(response.data.message);
@@ -32,18 +33,19 @@ const SubirArchivo = () => {
     );
 };
 
-const AsignarProfesor = () => {
-    const [profesores, setProfesores] = useState([]);
+// Componente para asignar usuario a grupo
+const AsignarUsuario = () => {
+    const [usuarios, setUsuarios] = useState([]);
     const [grupos, setGrupos] = useState([]);
-    const [profesorSeleccionado, setProfesorSeleccionado] = useState("");
+    const [usuarioSeleccionado, setUsuarioSeleccionado] = useState("");
     const [grupoSeleccionado, setGrupoSeleccionado] = useState("");
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const profesoresRes = await axios.get("/api/profesores");
+                const usuariosRes = await axios.get("/api/usuarios");
                 const gruposRes = await axios.get("/api/grupos");
-                setProfesores(profesoresRes.data);
+                setUsuarios(usuariosRes.data);
                 setGrupos(gruposRes.data);
             } catch (error) {
                 alert(error.response?.data?.message || "Error al cargar datos");
@@ -55,22 +57,22 @@ const AsignarProfesor = () => {
     const handleAsignar = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post("/api/profesores/asignar", {
-                profesorId: profesorSeleccionado,
+            const response = await axios.post("/api/usuarios/asignar", {
+                usuarioId: usuarioSeleccionado,
                 grupoId: grupoSeleccionado,
             });
             alert(response.data.message);
         } catch (error) {
-            alert(error.response?.data?.message || "Error al asignar profesor");
+            alert(error.response?.data?.message || "Error al asignar usuario");
         }
     };
 
     return (
         <form onSubmit={handleAsignar}>
-            <select onChange={(e) => setProfesorSeleccionado(e.target.value)} required>
-                <option value="">Seleccione un Profesor</option>
-                {profesores.map((profesor) => (
-                    <option key={profesor.id} value={profesor.id}>{profesor.nombre}</option>
+            <select onChange={(e) => setUsuarioSeleccionado(e.target.value)} required>
+                <option value="">Seleccione un Usuario</option>
+                {usuarios.map((usuario) => (
+                    <option key={usuario.id} value={usuario.id}>{usuario.nombre}</option>
                 ))}
             </select>
             <select onChange={(e) => setGrupoSeleccionado(e.target.value)} required>
@@ -79,50 +81,66 @@ const AsignarProfesor = () => {
                     <option key={grupo.id} value={grupo.id}>{grupo.nombre}</option>
                 ))}
             </select>
-            <button type="submit">Asignar Profesor</button>
+            <button type="submit">Asignar Usuario</button>
         </form>
     );
 };
 
-const ProfessorStudents = () => {
+// Componente principal para mostrar usuarios
+const UsuariosLista = () => {
+    const [usuarios, setUsuarios] = useState([]);
+
     useEffect(() => {
-        if ($.fn.dataTable.isDataTable("#tableStudents")) {
-            $("#tableStudents").DataTable().destroy();
+        const fetchUsuarios = async () => {
+            try {
+                const response = await axios.get("/api/usuarios");
+                setUsuarios(response.data);
+            } catch (error) {
+                alert(error.response?.data?.message || "Error al cargar usuarios");
+            }
+        };
+
+        fetchUsuarios();
+
+        if ($.fn.dataTable.isDataTable("#tableUsuarios")) {
+            $("#tableUsuarios").DataTable().destroy();
         }
-        $("#tableStudents").DataTable();
+        $("#tableUsuarios").DataTable();
     }, []);
 
     return (
         <LayoutTeacher>
-            <section className="student__container">
+            <section className="user__container">
                 <div className="container__title">
-                    <h3>Estudiantes</h3>
+                    <h3>Usuarios</h3>
                 </div>
                 <div className="container__content">
                     <div className="content__box">
-                        <h3>Subir Archivo de Profesores</h3>
+                        <h3>Subir Archivo de Usuarios</h3>
                         <SubirArchivo />
                     </div>
                     <div className="content__box">
-                        <h3>Asignar Profesor a Grupo</h3>
-                        <AsignarProfesor />
+                        <h3>Asignar Usuario a Grupo</h3>
+                        <AsignarUsuario />
                     </div>
                     <div className="content__box">
-                        <h3>Tabla de Estudiantes</h3>
-                        <table id="tableStudents">
+                        <h3>Lista de Usuarios</h3>
+                        <table id="tableUsuarios">
                             <thead>
                                 <tr>
-                                    <th>Codigo</th>
+                                    <th>ID</th>
                                     <th>Nombre</th>
                                     <th>Correo</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td>123456789</td>
-                                    <td>Ejemplo</td>
-                                    <td>ejemplo@gmail.com</td>
-                                </tr>
+                                {usuarios.map((usuario) => (
+                                    <tr key={usuario.id}>
+                                        <td>{usuario.id}</td>
+                                        <td>{usuario.nombre}</td>
+                                        <td>{usuario.correo}</td>
+                                    </tr>
+                                ))}
                             </tbody>
                         </table>
                     </div>
@@ -132,4 +150,4 @@ const ProfessorStudents = () => {
     );
 };
 
-export default ProfessorStudents;
+export default UsuariosLista;
