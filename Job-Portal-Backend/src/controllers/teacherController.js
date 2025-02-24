@@ -4,11 +4,22 @@ import CsvReader from "csv-reader";
 import Stream from "stream";
 import crypto from "crypto"; // Para generar contraseñas aleatorias
 import nodemailer from "nodemailer"; // Para enviar correos
+import bcrypt from 'bcrypt';
+
+
+// Clave para encriptar y desencriptar contraseñas (guardarla de forma segura)
+const llaveEncriptacion = "mi_clave_secreta"; // Reemplazar con una clave segura
 
 // Función para generar una contraseña aleatoria
 const generarContrasena = () => {
-  return crypto.randomBytes(6).toString("hex"); // Genera una contraseña de 12 caracteres
+  return crypto.randomBytes(12).toString("hex"); // Genera una contraseña de 24 caracteres
 };
+
+ // Encriptar la contraseña
+ const encriptarContrasena = async (contrasena) => {
+  return await bcrypt.hash(contrasena, 10);
+};
+
 
 // Función para enviar correo con la contraseña
 const enviarCorreo = async (correo, contrasena) => {
@@ -24,62 +35,63 @@ const enviarCorreo = async (correo, contrasena) => {
     from: "tu_correo@gmail.com",
     to: correo,
     subject: "Credenciales de acceso",
-    text: `Hola, se ha creado tu cuenta. Tu contraseña es: ${contrasena}`
+    text: "Hola, se ha creado tu cuenta. Tu contraseña es: ${contrasena}"
   };
 
   await transporter.sendMail(mailOptions);
 };
 
-// Función para validar si el profesor ya existe
-const obtenerProfesorPorCorreo = async (correo) => {
-  const resultado = await poolPromise.request()
-    .input("correo", correo)
-    .query(`SELECT ProfesorId FROM Profesor_TB WHERE Correo = @correo`);
-  
-  return resultado.recordset.length > 0 ? resultado.recordset[0].ProfesorId : null;
-};
+ // Verificar si el usuario existe
+    const userCheck = await pool.request()
+      .input("usuarioId", sql.Int, usuarioId)
+      .query("SELECT * FROM Usuario_TB WHERE Usuario_ID_PK = @usuarioId");
 
-// Agregar un nuevo profesor (manual o desde archivo)
-export const agregarProfesor = async (req, res) => {
+    if (userCheck.recordset.length === 0) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+// Agregar un nuevo usuario (manual o desde archivo)
+export const agregarUsuario = async (req, res) => {
   const archivo = req.file;
-  const profesor = req.body;
+  const usuario = req.body;
 
   try {
     if (!archivo) {
       // Validación de datos
-      if (!profesor.nombre || !profesor.apellido1 || !profesor.apellido2 || !profesor.genero || !profesor.correo) {
+      if (!usuario.nombre || !usuario.apellido1 || !usuario.apellido2 || !usuario.genero || !usuario.correo) {
         return res.status(400).json({ message: "Faltan campos obligatorios." });
       }
 
-      // Verificar si el profesor ya existe
-      let profesorId = await obtenerProfesorPorCorreo(profesor.correo);
+      // Verificar si el usuario ya existe
+      let usuarioId = await obtenerUsuarioPorCorreo(usuario.correo);
       
-      if (!profesorId) {
-        // Generar contraseña y registrar nuevo profesor
+      if (!usuarioId) {
+        // Generar contraseña y registrar nuevo usuario
         const contrasena = generarContrasena();
-        
+        const contrasenaEncriptada = encriptarContrasena(contrasena);
+
         const resultado = await poolPromise.request()
-          .input("nombre", profesor.nombre)
-          .input("apellido1", profesor.apellido1)
-          .input("apellido2", profesor.apellido2)
-          .input("genero", profesor.genero)
-          .input("correo", profesor.correo)
-          .input("contrasena", contrasena)
+          .input("nombre", usuario.nombre)
+          .input("apellido1", usuario.apellido1)
+          .input("apellido2", usuario.apellido2)
+          .input("genero", usuario.genero)
+          .input("correo", usuario.correo)
+          .input("contrasena", contrasenaEncriptada)
           .query(`
-            INSERT INTO Profesor_TB (Nombre, Apellido1, Apellido2, Genero, Correo, Contrasena)
-            OUTPUT INSERTED.ProfesorId
+INSERT INTO Usuario_TB (Nombre, Apellido1, Apellido2, Genero, Correo, Contrasena)
+            OUTPUT INSERTED.UsuarioId
             VALUES (@nombre, @apellido1, @apellido2, @genero, @correo, @contrasena)
           `);
         
-        profesorId = resultado.recordset[0].ProfesorId;
-        await enviarCorreo(profesor.correo, contrasena);
+        usuarioId = resultado.recordset[0].UsuarioId;
+        await enviarCorreo(usuario.correo, contrasena);
       }
 
-      return res.status(201).json({ message: "Profesor agregado o asociado exitosamente.", profesorId });
+      return res.status(201).json({ message: "Usuario agregado o asociado exitosamente.", usuarioId });
     }
 
     // Si hay archivo, procesarlo
-    let profesores = [];
+    let usuarios = [];
 
     if (archivo.mimetype === "text/csv") {
       const stream = new Stream.Readable();
@@ -88,7 +100,7 @@ export const agregarProfesor = async (req, res) => {
       const reader = new CsvReader(stream, { headers: true, delimiter: "," });
 
       for await (const row of reader) {
-        profesores.push(row);
+        usuarios.push(row);
       }
     } else if (archivo.mimetype === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") {
       const workbook = new ExcelJS.Workbook();
@@ -97,7 +109,7 @@ export const agregarProfesor = async (req, res) => {
 
       worksheet.eachRow((row, rowNumber) => {
         if (rowNumber > 1) {
-          profesores.push({
+          usuarios.push({
             nombre: row.getCell(1).text,
             apellido1: row.getCell(2).text,
             apellido2: row.getCell(3).text,
@@ -110,55 +122,56 @@ export const agregarProfesor = async (req, res) => {
       return res.status(400).json({ message: "Formato de archivo no soportado." });
     }
 
-    // Insertar profesores evitando duplicados
-    for (const prof of profesores) {
-      if (!prof.nombre || !prof.apellido1 || !prof.apellido2 || !prof.genero || !prof.correo) {
+    // Insertar usuarios evitando duplicados
+    for (const usr of usuarios) {
+      if (!usr.nombre || !usr.apellido1 || !usr.apellido2 || !usr.genero || !usr.correo) {
         continue;
       }
 
-      let profesorId = await obtenerProfesorPorCorreo(prof.correo);
+      let usuarioId = await obtenerUsuarioPorCorreo(usr.correo);
 
-      if (!profesorId) {
+      if (!usuarioId) {
         const contrasena = generarContrasena();
+        const contrasenaEncriptada = encriptarContrasena(contrasena);
 
         const resultado = await poolPromise.request()
-          .input("nombre", prof.nombre)
-          .input("apellido1", prof.apellido1)
-          .input("apellido2", prof.apellido2)
-          .input("genero", prof.genero)
-          .input("correo", prof.correo)
-          .input("contrasena", contrasena)
+          .input("nombre", usr.nombre)
+          .input("apellido1", usr.apellido1)
+          .input("apellido2", usr.apellido2)
+          .input("genero", usr.genero)
+          .input("correo", usr.correo)
+          .input("contrasena", contrasenaEncriptada)
           .query(`
-            INSERT INTO Profesor_TB (Nombre, Apellido1, Apellido2, Genero, Correo, Contrasena)
-            OUTPUT INSERTED.ProfesorId
+            INSERT INTO Usuario_TB (Nombre, Apellido1, Apellido2, Genero, Correo, Contrasena)
+            OUTPUT INSERTED.UsuarioId
             VALUES (@nombre, @apellido1, @apellido2, @genero, @correo, @contrasena)
           `);
 
-        profesorId = resultado.recordset[0].ProfesorId;
-        await enviarCorreo(prof.correo, contrasena);
+        usuarioId = resultado.recordset[0].UsuarioId;
+        await enviarCorreo(usr.correo, contrasena);
       }
     }
 
-    return res.status(200).json({ message: "Profesores agregados exitosamente." });
+    return res.status(200).json({ message: "Usuarios agregados exitosamente." });
   } catch (error) {
-    console.error("Error al agregar profesor:", error);
-    return res.status(500).json({ message: "Hubo un error al agregar el profesor. Inténtalo nuevamente." });
+    console.error("Error al agregar usuario:", error);
+    return res.status(500).json({ message: "Hubo un error al agregar el usuario. Inténtalo nuevamente." });
   }
 };
 
-// Editar un profesor
-export const editarProfesor = async (req, res) => {
+// Editar un usuario
+export const editarUsuario = async (req, res) => {
   const { correo } = req.params;
   const { nombre, apellido1, apellido2, genero } = req.body;
 
   try {
-    // Verificar si el profesor existe
-    const profesorId = await obtenerProfesorPorCorreo(correo);
-    if (!profesorId) {
-      return res.status(404).json({ message: "Profesor no encontrado." });
+    // Verificar si el usuario existe
+    const usuarioId = await obtenerUsuarioPorCorreo(correo);
+    if (!usuarioId) {
+      return res.status(404).json({ message: "Usuario no encontrado." });
     }
 
-    // Actualizar los datos del profesor
+    // Actualizar los datos del usuario
     await poolPromise.request()
       .input("nombre", nombre)
       .input("apellido1", apellido1)
@@ -166,64 +179,64 @@ export const editarProfesor = async (req, res) => {
       .input("genero", genero)
       .input("correo", correo)
       .query(`
-        UPDATE Profesor_TB 
+        UPDATE Usuario_TB 
         SET Nombre = @nombre, Apellido1 = @apellido1, Apellido2 = @apellido2, Genero = @genero
         WHERE Correo = @correo
       `);
 
-    return res.status(200).json({ message: "Profesor editado exitosamente." });
+    return res.status(200).json({ message: "Usuario editado exitosamente." });
   } catch (error) {
-    console.error("Error al editar profesor:", error);
-    return res.status(500).json({ message: "Hubo un error al editar el profesor." });
+    console.error("Error al editar usuario:", error);
+    return res.status(500).json({ message: "Hubo un error al editar el usuario." });
   }
 };
 
-// Eliminar un profesor
-export const eliminarProfesor = async (req, res) => {
+// Eliminar un usuario
+export const eliminarUsuario = async (req, res) => {
   const { correo } = req.params;
 
   try {
-    // Verificar si el profesor existe
-    const profesorId = await obtenerProfesorPorCorreo(correo);
-    if (!profesorId) {
-      return res.status(404).json({ message: "Profesor no encontrado." });
+    // Verificar si el usuario existe
+    const usuarioId = await obtenerUsuarioPorCorreo(correo);
+    if (!usuarioId) {
+      return res.status(404).json({ message: "Usuario no encontrado." });
     }
 
-    // Eliminar profesor de la base de datos
+    // Eliminar usuario de la base de datos
     await poolPromise.request()
       .input("correo", correo)
-      .query(`DELETE FROM Profesor_TB WHERE Correo = @correo`);
+      .query(`DELETE FROM Usuario_TB WHERE Correo = @correo`);
 
-    return res.status(200).json({ message: "Profesor eliminado exitosamente." });
+    return res.status(200).json({ message: "Usuario eliminado exitosamente." });
   } catch (error) {
-    console.error("Error al eliminar profesor:", error);
-    return res.status(500).json({ message: "Hubo un error al eliminar el profesor." });
+    console.error("Error al eliminar usuario:", error);
+    return res.status(500).json({ message: "Hubo un error al eliminar el usuario." });
   }
 };
 
-// Deshabilitar un profesor
-export const deshabilitarProfesor = async (req, res) => {
+// Deshabilitar un usuario
+export const deshabilitarUsuario = async (req, res) => {
   const { correo } = req.params;
 
   try {
-    // Verificar si el profesor existe
-    const profesorId = await obtenerProfesorPorCorreo(correo);
-    if (!profesorId) {
-      return res.status(404).json({ message: "Profesor no encontrado." });
+    // Verificar si el usuario existe
+    const usuarioId = await obtenerUsuarioPorCorreo(correo);
+    if (!usuarioId) {
+      return res.status(404).json({ message: "Usuario no encontrado." });
     }
 
-    // Marcar al profesor como inactivo
+    // Marcar al usuario como inactivo
     await poolPromise.request()
       .input("correo", correo)
       .query(`
-        UPDATE Profesor_TB 
+        UPDATE Usuario_TB 
         SET Activo = 0  -- 0 para inactivo
         WHERE Correo = @correo
       `);
 
-    return res.status(200).json({ message: "Profesor deshabilitado exitosamente." });
+    return res.status(200).json({ message: "Usuario deshabilitado exitosamente." });
   } catch (error) {
-    console.error("Error al deshabilitar profesor:", error);
-    return res.status(500).json({ message: "Hubo un error al deshabilitar el profesor." });
+    console.error("Error al deshabilitar usuario:", error);
+    return res.status(500).json({ message: "Hubo un error al deshabilitar el usuario." });
   }
 };

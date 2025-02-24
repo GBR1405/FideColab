@@ -78,20 +78,36 @@ export const cargarDatos = async (req, res) => {
           return null;  // Si ya existe, no insertamos
         }
 
-        return `('${u.nombre}', '${u.correo}', '${contrasenaCifrada}', '${u.rol}', ${u.curso ? `'${u.curso}'` : "NULL"})`;
+        return {
+          nombre: u.nombre,
+          correo: u.correo,
+          contrasenaCifrada,
+          rol: u.rol,
+          curso: u.curso || null
+        };
       }));
 
       // Filtrar valores no nulos (si ya existían registros con ese correo)
-      const valoresFinales = valores.filter((v) => v !== null).join(",");
+      const usuariosFinales = valores.filter((v) => v !== null);
 
-      if (valoresFinales) {
+      if (usuariosFinales.length > 0) {
         const query = `
           INSERT INTO Usuario_TB (Nombre, Correo, Contrasena, Rol, Curso)
-          VALUES ${valoresFinales}
+          VALUES @usuarios
         `;
 
-        await pool.request().query(query);
+        // Usar parámetros en la consulta para evitar inyecciones SQL
+        const request = pool.request();
+        usuariosFinales.forEach((usuario, index) => {
+          request.input(`nombre${index}`, usuario.nombre);
+          request.input(`correo${index}`, usuario.correo);
+          request.input(`contrasena${index}`, usuario.contrasenaCifrada);
+          request.input(`rol${index}`, usuario.rol);
+          request.input(`curso${index}`, usuario.curso);
+        });
 
+        await request.query(query);
+        
         return res.status(201).json({ message: "Datos cargados exitosamente." });
       } else {
         return res.status(400).json({ message: "Algunos usuarios ya existen." });
