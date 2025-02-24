@@ -1,11 +1,18 @@
 import { poolPromise } from "../config/db.js";  // Conexión a la base de datos
-import exceljs from "exceljs";  // Para manejar archivos Excel
+import ExcelJS from "exceljs";  // Para manejar archivos Excel
 import csvParser from "csv-parser";  // Para manejar archivos CSV
 import multer from "multer";  // Para la subida de archivos
 import fs from "fs";  // Para manejar archivos en el servidor
+import { promisify } from "util";  // Para convertir funciones a promesas
+import bcrypt from "bcryptjs";  // Para cifrar contraseñas
+
+const unlinkAsync = promisify(fs.unlink);
 
 // Configurar Multer para manejar la subida de archivos
 const upload = multer({ dest: "uploads/" });
+
+// Función para validar formato de correo
+const validarCorreo = (correo) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo);
 
 // Función para cargar datos desde un archivo
 export const cargarDatos = async (req, res) => {
@@ -22,17 +29,19 @@ export const cargarDatos = async (req, res) => {
       // Leer CSV
       const stream = fs.createReadStream(filePath).pipe(csvParser());
       for await (const row of stream) {
-        usuarios.push({
-          nombre: row.Nombre,
-          correo: row.Correo,
-          contrasena: row.Contrasena,
-          rol: row.Rol,
-          curso: row.Curso,
-        });
+        if (validarCorreo(row.Correo) && row.Nombre && row.Contrasena && row.Rol) {
+          usuarios.push({
+            nombre: row.Nombre.trim(),
+            correo: row.Correo.trim(),
+            contrasena: row.Contrasena.trim(),
+            rol: row.Rol.trim(),
+            curso: row.Curso ? row.Curso.trim() : null
+          });
+        }
       }
     } else if (fileExtension === "xlsx") {
       // Leer Excel
-      const workbook = new exceljs.Workbook();
+      const workbook = new ExcelJS.Workbook();
       await workbook.xlsx.readFile(filePath);
       const worksheet = workbook.worksheets[0];
 
@@ -44,7 +53,7 @@ export const cargarDatos = async (req, res) => {
           const rol = row.getCell(4).text.trim();
           const curso = row.getCell(5).text.trim();
 
-          if (nombre && correo) {
+          if (validarCorreo(correo) && nombre && contrasena && rol) {
             usuarios.push({ nombre, correo, contrasena, rol, curso });
           }
         }
@@ -56,30 +65,36 @@ export const cargarDatos = async (req, res) => {
     // Insertar en la base de datos si hay usuarios válidos
     if (usuarios.length > 0) {
       const pool = await poolPromise;
-      const transaction = pool.transaction();
 
-      try {
-        await transaction.begin();
+      const valores = await Promise.all(usuarios.map(async (u) => {
+        const contrasenaCifrada = await bcrypt.hash(u.contrasena, 10);  // Cifrar contraseña
 
-        for (const usuario of usuarios) {
-          await transaction.request()
-            .input("nombre", usuario.nombre)
-            .input("correo", usuario.correo)
-            .input("contrasena", usuario.contrasena)
-            .input("rol", usuario.rol)
-            .input("curso", usuario.curso)
-            .query(`
-              INSERT INTO Usuario_TB (Nombre, Correo, Contrasena, Rol, Curso)
-              VALUES (@nombre, @correo, @contrasena, @rol, @curso)
-            `);
+        // Verificar si el correo ya existe en la base de datos
+        const existeUsuario = await pool.request()
+          .input("correo", u.correo)
+          .query("SELECT 1 FROM Usuario_TB WHERE Correo = @correo");
+
+        if (existeUsuario.recordset.length > 0) {
+          return null;  // Si ya existe, no insertamos
         }
 
-        await transaction.commit();
+        return `('${u.nombre}', '${u.correo}', '${contrasenaCifrada}', '${u.rol}', ${u.curso ? `'${u.curso}'` : "NULL"})`;
+      }));
+
+      // Filtrar valores no nulos (si ya existían registros con ese correo)
+      const valoresFinales = valores.filter((v) => v !== null).join(",");
+
+      if (valoresFinales) {
+        const query = `
+          INSERT INTO Usuario_TB (Nombre, Correo, Contrasena, Rol, Curso)
+          VALUES ${valoresFinales}
+        `;
+
+        await pool.request().query(query);
+
         return res.status(201).json({ message: "Datos cargados exitosamente." });
-      } catch (error) {
-        await transaction.rollback();
-        console.error("Error al insertar usuarios:", error);
-        return res.status(500).json({ message: "Error al insertar datos en la base de datos." });
+      } else {
+        return res.status(400).json({ message: "Algunos usuarios ya existen." });
       }
     } else {
       return res.status(400).json({ message: "No se encontraron usuarios válidos en el archivo." });
@@ -90,7 +105,7 @@ export const cargarDatos = async (req, res) => {
   } finally {
     // Eliminar el archivo después de procesarlo
     if (req.file) {
-      fs.unlinkSync(req.file.path);
+      unlinkAsync(req.file.path).catch((err) => console.error("Error al eliminar archivo:", err));
     }
   }
 };

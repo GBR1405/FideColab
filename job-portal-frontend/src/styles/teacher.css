@@ -1,52 +1,142 @@
-.contenedor {
-    max-width: 400px;
-    margin: 0 auto;
-    background: var(--white-clr);
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+/* General */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f4f9;
+    margin: 0;
+    padding: 0;
+    color: #333;
 }
 
-h2 {
+h1 {
+    color: #4e4e4e;
     text-align: center;
-    color: var(--blue-royal-clr);
-    margin-bottom: 15px;
-    font-size: 1.5rem;
+    margin-bottom: 20px;
 }
 
-label {
-    display: block;
-    font-weight: bold;
-    margin-bottom: 5px;
-    color: var(--primary-text-clr);
+/* Formularios */
+form {
+    background-color: #ffffff;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    margin: 20px auto;
+    width: 80%;
+    max-width: 600px;
 }
 
-select, button {
+form input[type="text"],
+form input[type="email"],
+form input[type="file"],
+form select,
+form button {
     width: 100%;
-    padding: 10px;
+    padding: 12px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
     border-radius: 5px;
-    border: 1px solid #ccc;
-    margin-bottom: 15px;
-    font-family: "Poppins", serif;
+    font-size: 16px;
 }
 
-select {
-    color: var(--primary-text-clr);
-}
-
-button {
-    background: var(--blue-royal-clr);
-    color: var(--white-clr);
-    font-weight: bold;
-    border: none;
+form button {
+    background-color: #4e73df;
+    color: white;
     cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+form button:hover {
+    background-color: #2e59d9;
+}
+
+/* Lista de profesores */
+ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+ul li {
+    background-color: #f9f9f9;
+    padding: 12px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+ul li:nth-child(even) {
+    background-color: #efefef;
+}
+
+/* Estilos de mensajes */
+p {
+    font-size: 14px;
+    color: #555;
+}
+
+/* Estilos de los botones */
+button {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 20px;
+    display: block;
+    width: 200px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 button:hover {
-    background: var(--blue-indigo-clr);
+    background-color: #218838;
 }
 
-button:focus {
+/* Estilo del botón de PDF */
+button#pdfButton {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+button#pdfButton:hover {
+    background-color: #0056b3;
+    border-color: #004085;
+}
+
+/* Estilos para la carga de datos */
+select {
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    padding: 12px;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+select:focus {
     outline: none;
-    box-shadow: 0 0 5px var(--blue-royal-clr);
+    border-color: #4e73df;
+}
+
+/* Cargando */
+p.loading-message {
+    text-align: center;
+    font-size: 18px;
+    color: #4e73df;
+}
+
+/* Responsividad */
+@media screen and (max-width: 768px) {
+    form {
+        width: 90%;
+        margin: 20px auto;
+    }
+
+    ul li {
+        padding: 10px;
+    }
+
+    button {
+        width: 100%;
+    }
 }
