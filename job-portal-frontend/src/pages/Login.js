@@ -1,15 +1,17 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
-
 import axios from "axios";
 import { toast } from "react-toastify";
 import "../styles/login.css";
 
+
+const apiUrl = process.env.REACT_APP_API_URL;
+
 const Login = () => {
   const [correo, setCorreo] = useState("");
   const [contraseña, setContraseña] = useState("");
-  const [errors, setErrors] = useState({});
+  const [setErrors] = useState({});
   const navigate = useNavigate();
 
   const validateForm = () => {
@@ -34,10 +36,11 @@ const Login = () => {
     }
 
     try {
-      const response = await axios.post("http://localhost:3000/api/auth/login", {
+      const response = await axios.post(`${apiUrl}/auth/login`, {
         correo,
         contraseña,
-      });
+    });    
+    
 
       if (response.data.success) {
         toast.success("Inicio de sesión exitoso!");
@@ -58,7 +61,7 @@ const Login = () => {
       <div className="body-login">
         <header className="header-login">
           <img className="header__img-login" src="logo.png" alt="" />
-          <span className="header__text-login">Institución</span>
+          <span className="header__text-login">FideColab</span>
         </header>
         <main className="main-login">
           <div>
@@ -109,6 +112,11 @@ const Login = () => {
               <div className="form__link-login">
                 <a className="link__text-login" href="/forgot-password">
                   ¿Contraseña olvidada?
+                </a>
+              </div>
+              <div className="form__link-login">
+                <a className="link__text-login" href="/test-view">
+                ¿No eres estudiante? Echa un vistazo a la pagina!
                 </a>
               </div>
             </form>

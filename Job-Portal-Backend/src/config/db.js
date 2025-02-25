@@ -1,9 +1,9 @@
 import sql from 'mssql';
 
 const config = {
-  user: 'FideColab',  // GBR1405_SQLLogin_1
-  password: 'FideColab',  //e29fu1zenh
-  server: 'NAZA\MSSQLSERVER01',  // Nombre del servidor de SQL Server // http://fidecolab.mssql.somee.com/
+  user: 'FideColab',  
+  password: 'FideColab',  
+  server: 'DESKTOP-HKLF3LI\\SQLEXPRESS',  // Nombre del servidor de SQL Server
   database: 'FideColab',  // Nombre de la base de datos 
   options: {
     encrypt: true,  

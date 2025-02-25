@@ -20,18 +20,6 @@ const TestView = lazy(() => import("./pages/TestView"));
 const Manual = lazy(() => import("./pages/Manual"));
 const Tutorial = lazy(() => import("./pages/Tutorial"));
 const Preguntasfrecuentes = lazy(() => import("./pages/Questions"));
-const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
-const Historial = lazy(() => import("./pages/Historial"));
-const Reports = lazy(() => import("./pages/Reports"));
-const Depuration = lazy(() => import("./pages/Depuration"));
-const Personalization = lazy(() => import("./pages/Personalization"));
-const Professor = lazy(() => import("./pages/Professor"));
-const AdminProfessorCourses = lazy(() => import("./pages/AdminProfessorCourses"));
-const Course = lazy(() => import("./pages/Course"));
-const ProfessorProfile = lazy(() => import("./pages/ProfessorProfile"));
-const ProfessorStudents = lazy(() => import("./pages/ProfessorStudents"));
-const FilterPersonalization = lazy(() => import("./pages/FilterPersonalization"));
-const CreatePersonalization = lazy(() => import("./pages/CreatePersonalization"));
 
 const App = () => {
   const location = useLocation();
@@ -68,18 +56,6 @@ const App = () => {
           <Route path="/edit-user" element={<EditUser />} />
           <Route path="/user-profile" element={<UserProfile />} />
           <Route path="/test-view" element={<TestView />} />
-          <Route path="/admin-dashboard" element={<AdminDashboard />} />
-          <Route path="/historial" element={<Historial />} />
-          <Route path="/reports" element={<Reports />} />
-          <Route path="/depuration" element={<Depuration />} />
-          <Route path="/personalization" element={<Personalization />} />
-          <Route path="/professor" element={<Professor />} />
-          <Route path="/admin-professor-courses" element={<AdminProfessorCourses />} />
-          <Route path="/course" element={<Course />} />
-          <Route path="/professor-profile" element={<ProfessorProfile />} />
-          <Route path="/professor-students" element={<ProfessorStudents />} />
-          <Route path="/filter-personalization" element={<FilterPersonalization />} />
-          <Route path="/create-personalization" element={<CreatePersonalization />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

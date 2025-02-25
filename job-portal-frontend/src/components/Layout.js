@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom'; // Cambiar useHistory por useNavigate
 import '../styles/layout.css';
+import "../styles/animationRecharge.css";
 
 // Función para obtener el valor de una cookie por su nombre
 const getCookie = (name) => {
@@ -46,8 +47,8 @@ const Layout = ({ children }) => {
   // Función para cerrar sesión
   const handleLogout = () => {
     document.cookie = 'authToken=;expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
-    document.cookie = 'userData=;expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/'; // Borrar la cookie de userData
-    navigate('/login'); // Usar navigate para redirigir a /login
+    document.cookie = 'userData=;expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/'; 
+    navigate('/login'); 
   };
 
   // Mientras los datos se están cargando, mostrar un loader o spinner
@@ -71,7 +72,6 @@ const Layout = ({ children }) => {
           <h1 className="title__text" onClick={() => navigate('/userhome')}>FideColab</h1> {/* Redirige a /userhome */}
         </div>
         <div className="header__profile">
-          {/* Ícono generado a partir del nombre */}
           <div 
             className="profile__img-label" 
             style={{ backgroundColor: iconColor }} // Color de fondo aleatorio

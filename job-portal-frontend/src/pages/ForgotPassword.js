@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import "../styles/login.css";
 
+const apiUrl = process.env.REACT_APP_API_URL;
+
 export default function ForgotPassword() {
     const [email, setEmail] = useState("");
     const navigate = useNavigate();
@@ -23,7 +25,7 @@ export default function ForgotPassword() {
       });
   
       try {
-        await axios.post("http://localhost:3000/api/auth/forgot-password", { email });
+        await axios.post(`${apiUrl}/auth/forgot-password`, { email });
         Swal.fire({
           title: 'Correo enviado',
           text: 'Revisa tu bandeja de entrada para continuar con la recuperación de tu contraseña.',
@@ -46,7 +48,7 @@ export default function ForgotPassword() {
       <div className="body-login">
       <header className="header-login">
       <img className="header__img-login" src="logo.png" alt="" />
-      <span className="header__text-login">Institución</span>   
+      <span className="header__text-login">FideColab</span>   
         </header>
         <main className="main-login">
           <div className="login-right-login">

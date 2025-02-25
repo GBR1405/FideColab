@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import UserModel from "../model/userModel";
 
+const apiUrl = process.env.REACT_APP_API_URL;
+
 const SignUp = () => {
   const [formValues, setFormValues] = useState(new UserModel({}));
 
@@ -44,7 +46,7 @@ const SignUp = () => {
 
     if (Object.keys(errors).length === 0) {
       try {
-        const response = await axios.post("http://localhost:3000/api/auth/register-user", formValues);
+        const response = await axios.post(`${apiUrl}/auth/register-user`, formValues);
         if (response.data.success) {
           toast.success(response.data.message || "Registration successful!");
           setFormValues(new UserModel({}));  // Reset form values

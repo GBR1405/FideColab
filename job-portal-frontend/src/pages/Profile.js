@@ -3,7 +3,9 @@ import Layout from "../components/Layout";
 import "../styles/profile.css";
 import axios from "axios";
 import Cookies from "js-cookie";
-import EditUser from "./EditUser"; // Importamos el modal
+import EditUser from "./EditUser";
+
+const apiUrl = process.env.REACT_APP_API_URL;
 
 function Profile() {
   const [user, setUser] = useState(null);
@@ -23,7 +25,7 @@ function Profile() {
       }
 
       const response = await axios.get(
-        "http://localhost:3000/api/auth/user-profile",
+        `${apiUrl}/auth/user-profile`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -131,7 +133,7 @@ function Profile() {
         <div className="container__bottom">
           <div className="container__heading">
             <h3>Simulaciones recientes</h3>
-            <a className="bottom__text" href="#">
+            <a className="bottom__text" href="/">
               Ver historial completo
             </a>
           </div>

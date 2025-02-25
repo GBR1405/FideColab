@@ -3,6 +3,9 @@ import axios from "axios";
 import Layout from "../components/Layout";
 import Cookies from "js-cookie";
 
+
+const apiUrl = process.env.REACT_APP_API_URL;
+
 function UserHomeScreen() {
   const [userData, setUserData] = useState(null);
   const [error, setError] = useState(""); 
@@ -20,7 +23,7 @@ function UserHomeScreen() {
         return;
       }
 
-      const response = await axios.get("http://localhost:3000/api/auth/get-userDetails", {
+      const response = await axios.get(`${apiUrl}/auth/get-userDetails`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

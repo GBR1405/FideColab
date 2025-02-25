@@ -59,6 +59,7 @@ html{
 
 .title__text{
   font-size: 24px;
+  cursor: pointer;
 }
 
 .header__profile{
@@ -66,10 +67,12 @@ html{
   width: 200px;
   justify-content: space-evenly;
   align-items: center;
+  cursor: pointer;
 }
 
 .profile__img{    
   width: 50px;
+  cursor: pointer;
 }
 
 .sidebar{
@@ -120,6 +123,7 @@ html{
   font-size: 18px;
   font-weight: bold;
   color: var(--blue-royal-clr);
+  cursor: pointer;
 }
 
 .top__close{
