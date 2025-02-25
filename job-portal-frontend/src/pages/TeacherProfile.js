@@ -1,6 +1,6 @@
 import React from 'react';
 import "../styles/TeacherComponents.css";
-import LayoutTeacher from "../components/LayoutTeacher";
+import layoutTeacher from "../components/LayoutayoutTeacher";
 
 const ProfessorProfile = () => {
   return (

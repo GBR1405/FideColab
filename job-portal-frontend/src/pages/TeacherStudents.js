@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import "../styles/TeacherComponentsComponents.css";
+import "../styles/teacherComponentsComponents.css";
 import LayoutTeacher from "../components/LayoutTeacher";
 import $ from "jquery";
 import "datatables.net-dt/css/jquery.dataTables.css";
