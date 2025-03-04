@@ -3,7 +3,7 @@ import sql from 'mssql';
 const config = {
   user: 'FideColab',  
   password: 'FideColab',  
-  server: 'DESKTOP-HKLF3LI\\SQLEXPRESS',  // Nombre del servidor de SQL Server
+  server: 'DESKTOP-D644L7P\SQLEXPRESS',  // Nombre del servidor de SQL Server
   database: 'FideColab',  // Nombre de la base de datos 
   options: {
     encrypt: true,  
