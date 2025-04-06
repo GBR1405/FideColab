@@ -1,0 +1,291 @@
+:root{
+    --blue-sapphire-clr: #2a40bf;
+    --blue-cobalt-clr: #2b3a8c;
+    --blue-royal-clr: #1935ca;
+    --dark-royal-clr: #0d24a1;
+    --blue-indigo-clr: #140b99;
+    --white-smoke-clr: #fbf9f9;
+    --white-clr: #fffffe;
+    --yellow-clr: #f2cb05;
+    --dark-yellow-clr: #dfba00;
+    --orange-clr: #f2a007;
+    --primary-text-clr: #696F79;
+}
+  
+*{
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html{
+    font-family: "Poppins", serif;
+    line-height: 1.5rem;
+    color: var(--primary-text-clr);
+    background-color: var(--white-smoke-clr);
+}
+
+/* Estilos del layout en sala de espera */
+
+.body__room{
+    min-height: 100vh;
+
+    display: grid;
+    grid-template: 
+    "header header" 10vh
+    "sidebar main" 1fr/
+    18vw 1fr;  
+    
+    .header {
+        grid-area: header;
+        top: 0;
+        position: sticky;
+        min-width: 100%;
+
+        display: grid;
+        grid-template-columns: auto auto auto;
+        background-color: var(--white-smoke-clr);
+        align-items: center;
+    }
+
+    .header__logo {
+        display: grid;
+        grid-template-columns: auto auto;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 5px;
+        padding-left: 40px;
+    }
+
+    .image__source{
+        width: 3.5vw;
+    }
+
+    .logo__text{
+        color: var(--blue-royal-clr);
+        font-size: 0.8vw;
+        font-weight: 600;
+    }
+
+    .header__title{
+        display: flex;
+        justify-content: center;
+    }
+
+    .title__text{
+        font-size: 1.5vw;
+        font-weight: 700;
+        color: var(--blue-royal-clr);
+    }
+
+    .header__profile{
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 10px;
+        padding-right: 40px;
+    }
+
+    .profile__img{    
+        width: 3.5vw;
+    }
+
+    .profile__text{
+        font-size: 1vw;
+        font-weight: 500;
+    }
+
+    .sidebar{
+        grid-area: sidebar; 
+        padding: 0px 10px; 
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+
+        i{
+            font-size: 1.2vw;
+            color: var(--blue-royal-clr);
+        }
+    }
+
+    .sidebar__list{
+        list-style: none;
+        height: 65vh;
+        display: flex;
+        flex-direction: column;
+        color: var(--primary-text-clr);
+    }
+
+    .list__item{
+        border-radius: .5em;
+        padding: 16px;
+        margin-top: 10px;
+    }
+
+    .item__area{
+        text-decoration: none;
+        color: var(--text-clr);
+        display: flex;
+        align-items: center;
+        gap: 1em;
+    }
+
+    .area__text{
+        font-size: 1vw;
+        font-weight: 500;
+    }
+
+    .list__item--active, .list__item--active i{
+        background-color: var(--blue-royal-clr);
+        color: white;
+    }
+
+    .sidebar__buttom{
+        height: 20vh;
+        display: grid;
+    }
+
+    .buttom__btn{
+        background-color: var(--white-smoke-clr);
+        border: none;
+        cursor: pointer;
+        padding: 16px 20px;
+        width: 100%;
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1em;
+    }
+
+    .btn__text{
+        color: var(--primary-text-clr);
+        font-family: "Poppins", serif;
+        font-size: 1.1vw;
+        font-weight: 500;
+    }
+
+    .main{
+        grid-area: main;
+        padding: 0px 15px 15px 0px;
+    }
+
+    /* Componentes de sala de espera */
+    .room__container{
+        border-radius: 1em;
+        padding: 2vw 0px 2vw 2vw;
+        background-color: var(--white-clr);
+        box-shadow: 1px 1px 25px 3px rgba(0, 0, 0, 0.05);
+        height: 100%;
+
+        display: grid;
+        grid-template-columns: 80% 20%;
+
+        .container__content{
+            background-color: var(--white-smoke-clr);
+            box-shadow: inset 0px 0px 10px rgba(0, 0, 0, 0.05);
+            border-radius: 1em;
+        
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;  
+            padding-inline: 2.5%;  
+            align-items: center;
+            justify-items: center;
+        }
+
+        .content__box{
+            background-color: white;
+            box-shadow: 0px 0px 15px 5px rgba(0, 0, 0, 0.05);
+            border-radius: 1em;
+            width: 80%;
+            height: 90%;
+            max-height: 35vh;
+        
+            display: grid;
+            grid-template-rows: 20% 80%;
+        }
+
+        .box__title{
+            background-color: var(--blue-royal-clr);
+            border-radius: 1em 1em 0px 0px;
+            font-size: 0.9vw;
+            font-weight: 600;
+            color: white;
+        
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .box__data{
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-evenly;
+        }
+
+        .data__player{
+            box-shadow: 0 4px 1px -2px rgba(0, 0, 0, 0.05);
+            height: 100%;
+        
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+        
+            font-size: 0.9vw;
+            color: forestgreen;
+        }
+
+        .data__player:last-child{
+            box-shadow: none;
+        }
+
+        .player__text{
+            color: var(--primary-text-clr);
+            font-weight: 500;
+        }
+
+        .container__information{
+            display: grid;
+            grid-template-rows: 10% 70% 20%;
+            padding-inline: 2vw;
+            align-items: center;
+            justify-items: center;
+        }
+
+        .information__title{
+            color: var(--blue-royal-clr);
+            font-size: 1vw;
+            font-weight: 500;
+        }
+
+        .information__description{
+            display: flex;
+            height: 100%;
+            flex-direction: column;
+            justify-content: center;
+            gap: 5%;
+        
+            font-size: 0.8vw;
+            text-align: center;
+        }
+
+        .information__button{
+            background-color: var(--blue-royal-clr);
+            width: 8vw;
+            height: 3vw;
+            border-radius: 5px;
+            cursor: pointer;
+        
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .button__help{
+            all: unset;
+            color: white;
+            font-size: 1vw;
+            font-weight: 500;
+        }
+    }
+}

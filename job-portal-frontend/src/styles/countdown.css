@@ -1,0 +1,33 @@
+/* Estilos para el temporizador */
+.countdown-timer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.8);
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+  }
+  
+  .countdown-number {
+    font-size: 10rem;
+    font-weight: bold;
+    color: white;
+    animation: zoomInOut 1s infinite;
+  }
+  
+  /* Animación para el número */
+  @keyframes zoomInOut {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.2);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }

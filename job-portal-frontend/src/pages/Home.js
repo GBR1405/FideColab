@@ -1,26 +1,31 @@
-import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom'; // Usamos useNavigate para redirigir
-import Cookies from 'js-cookie'; // Importamos js-cookie
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { getRole, isAuthenticated } from "../LN/UtilsAuth"; // Importamos las funciones
 
-function Home() {
-  const navigate = useNavigate(); // Usamos navigate para redirigir
+const AuthRedirect = () => {
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Comprobamos si la cookie de autenticación existe
-    const token = Cookies.get('authToken');
-    if (!token) {
-      // Si no hay cookie, redirigimos al login
-      navigate('/login');
-    }else{
-        navigate('/homeScreen');
+    if (!isAuthenticated()) {
+      navigate("/login");
+      return;
     }
-  }, [navigate]); // Reaccionamos a cambios en 'navigate'
 
-  return (
-    <h2 style={{ textAlign: 'center' }}>
-    </h2>
-  );
-}
+    const role = getRole();
 
-export default Home;
+    if (!role) {
+      navigate("/login");
+      return;
+    }
+    
+    if (role === "Administrador") {
+      navigate("/admin");
+    } else {
+      navigate("/homeScreen");
+    }
+  }, [navigate]);
 
+  return <h2>.</h2>;
+};
+
+export default AuthRedirect;

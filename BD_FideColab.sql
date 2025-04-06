@@ -47,37 +47,67 @@ CREATE TABLE Tipo_Juego_TB (
 	Juego NVARCHAR(100) NOT NULL
 );
 
+INSERT INTO Tipo_Juego_TB (Juego) 
+VALUES 
+    ('Rompecabezas'), 
+    ('Memoria'), 
+    ('Dibujo'), 
+    ('Ahorcado');
+
+
 -- Tabla Tema_Juego - T
 
 CREATE TABLE Tema_Juego_TB (
     Tema_Juego_ID_PK INT PRIMARY KEY IDENTITY,
 	Tipo_Juego_ID_FK INT NOT NULL,
 	Contenido NVARCHAR(512) NOT NULL,
+	Estado BIT NOT NULL,
 
 	FOREIGN KEY (Tipo_Juego_ID_FK) REFERENCES Tipo_Juego_TB(Tipo_Juego_ID_PK)
 );
 
--- Tabla Equipo - T
+-- Tipo de Juego 1 (Rompecabezas, Memoria, Dibujo, Ahorcado)
+INSERT INTO Tema_Juego_TB (Tipo_Juego_ID_FK, Contenido, Estado) 
+VALUES 
+    (1, 'https://www.nacion.com/resizer/v2/KYWWQHAGJVBTTCOTROK65JMZE4.jpg?smart=true&auth=f8198d2ecc56729ad13305ee9159bee607533fd4080880e3365ff5c9fb226bdb&width=2160&height=1559', 1), 
+    (1, 'https://www.larepublica.net/storage/images/2021/08/25/20210825145403.empleo.jpg', 1);
 
-CREATE TABLE Equipo_TB (
-    Equipo_ID_PK INT PRIMARY KEY IDENTITY,
-	Numero_Equipo INT NOT NULL,
-    Nombre_Equipo NVARCHAR(100) NOT NULL
-);
+-- Tipo de Juego 2 (Sin datos)
+
+-- Tipo de Juego 3 (Fidelitas en Marte, Un pez en la tierra)
+INSERT INTO Tema_Juego_TB (Tipo_Juego_ID_FK, Contenido, Estado) 
+VALUES 
+    (3, 'Fidelitas en marte', 1), 
+    (3, 'Un pez en la tierra', 1);
+GO
+
+-- Tipo de Juego 4 (Fidelitas, Manzana)
+INSERT INTO Tema_Juego_TB (Tipo_Juego_ID_FK, Contenido, Estado) 
+VALUES 
+    (4, 'Fidelitas', 1), 
+    (4, 'Manzana', 1);
+GO
 
 -- Tabla Usuario
 
 CREATE TABLE Usuario_TB (
     Usuario_ID_PK INT PRIMARY KEY IDENTITY,
     Nombre NVARCHAR(100) NOT NULL,
+	Apellido1 NVARCHAR(100) NOT NULL,
+	Apellido2 NVARCHAR(100) NOT NULL,
     Correo NVARCHAR(100) NOT NULL UNIQUE,
-    Contraseña NVARCHAR(100) NOT NULL,
+    Contraseï¿½a NVARCHAR(100) NOT NULL,
 	Rol_ID_FK INT NOT NULL,
 	Genero_ID_FK INT NOT NULL,
+	Estado BIT NOT NULL,
 
 	FOREIGN KEY (Rol_ID_FK) REFERENCES Rol_TB(Rol_ID_PK),
 	FOREIGN KEY (Genero_ID_FK) REFERENCES Genero_TB(Genero_ID_PK),
 );
+
+ALTER TABLE Usuario_TB ADD Estado bit NOT NULL
+delete from Usuario_TB
+SELECT * FROM Usuario_TB
 
 -- Tabla Personalizacion
 
@@ -119,11 +149,13 @@ CREATE TABLE Partida_TB (
     Partida_ID_PK INT PRIMARY KEY IDENTITY,
     FechaInicio DATETIME NOT NULL,
     FechaFin DATETIME,
-    Profesor_ID_FK INT,
+    Profesor_ID_FK INT NOT NULL,
+	Grupo_ID_FK INT NOT NULL,
     EstadoPartida NVARCHAR(20) NOT NULL CHECK (EstadoPartida IN ('en espera', 'iniciada', 'finalizada')),
     Personalizacion_ID_FK INT,  
     FOREIGN KEY (Profesor_ID_FK) REFERENCES Usuario_TB(Usuario_ID_PK),
-    FOREIGN KEY (Personalizacion_ID_FK) REFERENCES Personalizacion_TB(Personalizacion_ID_PK)
+    FOREIGN KEY (Personalizacion_ID_FK) REFERENCES Personalizacion_TB(Personalizacion_ID_PK),
+	FOREIGN KEY (Grupo_ID_FK) REFERENCES GrupoCurso_TB(GrupoCurso_ID_PK)
 );
 
 -- Tabla Participantes
@@ -131,12 +163,11 @@ CREATE TABLE Partida_TB (
 CREATE TABLE Participantes_TB (
 	Participantes_ID_PK INT PRIMARY KEY IDENTITY,
 	Usuario_ID_FK INT NOT NULL,
-	Equipo_ID_FK INT NOT NULL,
+	Equipo_Numero INT NOT NULL,
 	Partida_ID_FK INT NOT NULL,
 	Fecha_Ingreso DATETIME
 
 	FOREIGN KEY (Usuario_ID_FK) REFERENCES Usuario_TB(Usuario_ID_PK),
-	FOREIGN KEY (Equipo_ID_FK) REFERENCES Equipo_TB(Equipo_ID_PK),
 	FOREIGN KEY (Partida_ID_FK) REFERENCES Partida_TB(Partida_ID_PK)
 );
 

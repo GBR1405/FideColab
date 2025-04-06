@@ -123,13 +123,14 @@
     gap: 10px;
 }
 
-.faq__box{
+.faq__box {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    transition: all 0.3s ease-in-out;
 }
 
-.faq__title{
+.faq__title {
     background-color: var(--white-clr);
     box-shadow: 0.5px 2px 3px 1px rgba(0, 0, 0, 0.2);
     color: var(--primary-text-clr);
@@ -138,10 +139,38 @@
     border-radius: 1em;
     list-style: none;
     cursor: pointer;
+    transition: background-color 0.3s ease-in-out, transform 0.3s ease-in-out;
 }
 
-.faq__text{
+details[open] .faq__title {
+    background-color: var(--blue-royal-clr);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.faq__text {
     padding: 15px;
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: opacity 0.3s ease-in-out, max-height 0.3s ease-in-out;
+}
+
+/* Mostrar el contenido cuando el details está abierto */
+details[open] .faq__text {
+    opacity: 1;
+    max-height: 200px;
+}
+
+/* Animación de la flecha al expandir */
+.faq__title::after {
+    content: "▼";
+    float: right;
+    transition: transform 0.3s ease-in-out;
+}
+
+details[open] .faq__title::after {
+    transform: rotate(180deg);
 }
 
 .manual__heading{

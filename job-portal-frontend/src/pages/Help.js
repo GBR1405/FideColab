@@ -9,8 +9,11 @@ const Help = () => {
     return (
 
       <Layout>
+
+
+
   <section className="main__container-help">
-    <div className="container__navegation-help">
+    <div className="container__navegation">
     </div>
 
     <div className="container__content-help">

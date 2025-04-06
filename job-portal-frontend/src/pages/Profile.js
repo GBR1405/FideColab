@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import Layout from "../components/Layout";
 import "../styles/profile.css";
-import axios from "axios";
 import Cookies from "js-cookie";
 import EditUser from "./EditUser";
+import CryptoJS from "crypto-js";
 
-const apiUrl = process.env.REACT_APP_API_URL;
+const secretKey = process.env.REACT_APP_SECRET_KEY;
 
 function Profile() {
   const [user, setUser] = useState(null);
@@ -16,31 +16,16 @@ function Profile() {
     fetchUserDetails();
   }, []);
 
-  const fetchUserDetails = async () => {
-    try {
-      const token = Cookies.get("authToken");
-      if (!token) {
-        setError("Debes iniciar sesión para ver tu perfil.");
-        return;
-      }
-
-      const response = await axios.get(
-        `${apiUrl}/auth/user-profile`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (response.data.success) {
-        setUser(response.data.user);
-      } else {
-        setError(response.data.message || "No se pudo obtener la información del usuario.");
-      }
-    } catch (err) {
-      setError(err.response?.data?.message || "Ocurrió un error.");
-    }
+  const fetchUserDetails = () => {
+    const encryptedUserInfo = Cookies.get("IFUser_Info");
+  if (encryptedUserInfo) {
+    // Desencriptar la información
+    const bytes = CryptoJS.AES.decrypt(encryptedUserInfo, secretKey);
+    const decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+    setUser(decryptedData);
+  } else {
+    setError("Debes iniciar sesión para ver tu perfil.");
+  }
   };
 
   if (error) {
@@ -71,14 +56,14 @@ function Profile() {
           <div className="top__image">
             <img
               className="image__user"
-              src={`https://api.dicebear.com/7.x/identicon/svg?seed=${user.name}`}
+              src={`https://api.dicebear.com/7.x/identicon/svg?seed=${user.nombre}`}
               alt="User Avatar"
             />
           </div>
           <div className="top__info">
             <div className="info__box">
-              <h1 className="info__title">{user.name}</h1>
-              <span>{user.role}</span>
+              <h1 className="info__title">{`${user.nombre} ${user.apellido1} ${user.apellido2}`}</h1>
+              <span>{user.rol}</span>
             </div>
             <div className="info__stats">
               <div className="stats__group">
@@ -114,7 +99,7 @@ function Profile() {
           <div className="middle__content">
             <div className="content__info">
               <label className="info__label">Nombre completo:</label>
-              <input className="info__input" type="text" value={user.name} readOnly />
+              <input className="info__input" type="text" value={`${user.nombre} ${user.apellido1} ${user.apellido2}`} readOnly />
             </div>
             <div className="content__info">
               <label className="info__label">Curso:</label>
@@ -122,11 +107,11 @@ function Profile() {
             </div>
             <div className="content__info">
               <label className="info__label">Correo electrónico:</label>
-              <input className="info__input" type="text" value={user.email} readOnly />
+              <input className="info__input" type="text" value={user.correo} readOnly />
             </div>
             <div className="content__info">
               <label className="info__label">Género:</label>
-              <input className="info__input" type="text" value={user.gender} readOnly />
+              <input className="info__input" type="text" value={user.genero} readOnly />
             </div>
           </div>
         </div>

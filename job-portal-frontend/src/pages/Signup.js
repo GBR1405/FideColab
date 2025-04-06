@@ -8,15 +8,15 @@ const apiUrl = process.env.REACT_APP_API_URL;
 
 const SignUp = () => {
   const [formValues, setFormValues] = useState(new UserModel({}));
-
   const [formErrors, setFormErrors] = useState({});
 
+  // Validar formulario
   const validateForm = () => {
     const errors = {};
 
-    if (!formValues.nombre) {
-      errors.nombre = "Nombre is required";
-    }
+    if (!formValues.nombre) errors.nombre = "Nombre is required";
+    if (!formValues.apellido1) errors.apellido1 = "Apellido1 is required";
+    if (!formValues.apellido2) errors.apellido2 = "Apellido2 is required";
 
     if (!formValues.correo) {
       errors.correo = "Correo is required";
@@ -24,21 +24,14 @@ const SignUp = () => {
       errors.correo = "Please enter a valid email address";
     }
 
-    if (!formValues.contraseña) {
-      errors.contraseña = "Contraseña is required";
-    }
-
-    if (!formValues.rolId) {
-      errors.rolId = "Rol is required";
-    }
-
-    if (!formValues.generoId) {
-      errors.generoId = "Genero is required";
-    }
+    if (!formValues.contraseña) errors.contraseña = "Contraseña is required";
+    if (!formValues.rolId) errors.rolId = "Rol is required";
+    if (!formValues.generoId) errors.generoId = "Genero is required";
 
     return errors;
   };
 
+  // Enviar formulario
   const handleSubmit = async (e) => {
     e.preventDefault();
     const errors = validateForm();
@@ -49,8 +42,8 @@ const SignUp = () => {
         const response = await axios.post(`${apiUrl}/auth/register-user`, formValues);
         if (response.data.success) {
           toast.success(response.data.message || "Registration successful!");
-          setFormValues(new UserModel({}));  // Reset form values
-          setFormErrors({});  // Clear errors
+          setFormValues(new UserModel({}));
+          setFormErrors({});
         } else {
           toast.error(response.data.message || "Registration failed!");
         }
@@ -61,6 +54,7 @@ const SignUp = () => {
     }
   };
 
+  // Actualizar valores del formulario
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormValues({ ...formValues, [name]: value });
@@ -80,6 +74,30 @@ const SignUp = () => {
             placeholder="Enter your name"
           />
           {formErrors.nombre && <span className="error-message">{formErrors.nombre}</span>}
+        </div>
+
+        <div className="form-group">
+          <label>Apellido 1</label>
+          <input
+            type="text"
+            name="apellido1"
+            value={formValues.apellido1}
+            onChange={handleInputChange}
+            placeholder="Enter your first last name"
+          />
+          {formErrors.apellido1 && <span className="error-message">{formErrors.apellido1}</span>}
+        </div>
+
+        <div className="form-group">
+          <label>Apellido 2</label>
+          <input
+            type="text"
+            name="apellido2"
+            value={formValues.apellido2}
+            onChange={handleInputChange}
+            placeholder="Enter your second last name"
+          />
+          {formErrors.apellido2 && <span className="error-message">{formErrors.apellido2}</span>}
         </div>
 
         <div className="form-group">
@@ -108,11 +126,7 @@ const SignUp = () => {
 
         <div className="form-group">
           <label>Rol</label>
-          <select
-            name="rolId"
-            value={formValues.rolId}
-            onChange={handleInputChange}
-          >
+          <select name="rolId" value={formValues.rolId} onChange={handleInputChange}>
             <option value="">Select Role</option>
             <option value="1">Estudiante</option>
             <option value="2">Profesor</option>
@@ -123,11 +137,7 @@ const SignUp = () => {
 
         <div className="form-group">
           <label>Genero</label>
-          <select
-            name="generoId"
-            value={formValues.generoId}
-            onChange={handleInputChange}
-          >
+          <select name="generoId" value={formValues.generoId} onChange={handleInputChange}>
             <option value="">Select Gender</option>
             <option value="1">Hombre</option>
             <option value="2">Mujer</option>
@@ -136,17 +146,12 @@ const SignUp = () => {
           {formErrors.generoId && <span className="error-message">{formErrors.generoId}</span>}
         </div>
 
-        <button type="submit" className="login-btn">
-          Sign Up
-        </button>
+        <button type="submit" className="login-btn">Sign Up</button>
       </form>
+
       <p style={{ textAlign: "center" }}>
         Already have an account?{" "}
-        <Link
-          to="/login"
-          className="toggle-link"
-          style={{ color: "#007BFF", textDecoration: "underline" }}
-        >
+        <Link to="/login" className="toggle-link" style={{ color: "#007BFF", textDecoration: "underline" }}>
           Login
         </Link>
       </p>

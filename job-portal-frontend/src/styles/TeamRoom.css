@@ -1,0 +1,349 @@
+/* Estilos para la sala de equipo */
+.team-room-header {
+    margin-bottom: 20px;
+    padding: 10px;
+    background: #f0f0f0;
+    border-radius: 8px;
+  }
+  
+  .group-name {
+    color: #4a6baf;
+    font-weight: bold;
+  }
+  
+  .cursor-container {
+  position: relative;
+  width: 100%;
+  height: 70vh; /* Ajusta según necesidad */
+  min-height: 400px; /* Altura mínima */
+  overflow: hidden; /* Evita desbordamiento */
+  border: 1px dashed #ccc; /* Solo para debug */
+}
+  
+  .remote-cursor {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    pointer-events: none;
+    z-index: 1000;
+    transform: translate(-12px, -12px);
+  }
+  
+  /* Círculo externo */
+  .remote-cursor::before {
+    content: '';
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--cursor-color);
+    opacity: 0.3;
+  }
+  
+  /* Círculo interno */
+  .remote-cursor::after {
+    content: '';
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--cursor-color);
+    top: 6px;
+    left: 6px;
+    box-shadow: 0 0 2px rgba(0,0,0,0.5);
+  }
+  
+  /* Nombre en diagonal inferior derecha */
+  .cursor-name {
+    position: absolute;
+    top: 18px;  /* 24px (altura del cursor) - ajuste */
+    left: 18px; /* 24px (ancho del cursor) - ajuste */
+    font-size: 11px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 1px 6px;
+    border-radius: 8px;
+    white-space: nowrap;
+  }
+  
+  .team-members ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .team-members li {
+    padding: 8px;
+    margin: 4px 0;
+    background: #e3f2fd;
+    border-radius: 4px;
+  }
+  
+  .user-role {
+    font-size: 0.8em;
+    color: #666;
+    margin-left: 8px;
+  }
+
+  .cursor-name {
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  /* Estilos para rompecabezas */
+
+  /* Puzzle Game Styles */
+  /* Estilos para el rompecabezas */
+  .game-container {
+    position: relative;
+    width: 100%;
+    height: 70vh;
+    background-color: #f0f0f0;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  .puzzle-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+  
+  .puzzle-piece {
+    position: absolute;
+    box-sizing: border-box;
+    background-repeat: no-repeat;
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+  }
+  
+  .puzzle-piece.locked {
+    cursor: default;
+    border: 2px solid #4CAF50;
+  }
+
+  /* Mantén todos los estilos existentes y añade estos: */
+
+.game-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.game-info-panel {
+  background: rgba(255, 255, 255, 0.9);
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.game-info-panel h2 {
+  margin-top: 0;
+  color: #2c3e50;
+  font-size: 1.2rem;
+}
+
+.game-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.game-details p {
+  margin: 5px 0;
+  font-size: 0.9rem;
+}
+
+.game-details strong {
+  color: #3498db;
+}
+
+.game-container-inner {
+  flex-grow: 1;
+  position: relative;
+}
+
+/* Mantén los estilos de remote-cursor y demás existentes */
+.remote-cursor {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background-color: var(--cursor-color);
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+}
+
+.cursor-name {
+  position: absolute;
+  top: 15px;
+  left: 0;
+  white-space: nowrap;
+  background-color: var(--cursor-color);
+  color: white;
+  padding: 2px 5px;
+  border-radius: 3px;
+  font-size: 12px;
+}
+
+/* ProfessorDashboard.css */
+.professor-dashboard {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.game-controls {
+  background: #f5f5f5;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.next-button {
+  background: #4CAF50;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.next-button:hover {
+  background: #45a049;
+}
+
+.games-list ul {
+  list-style: none;
+  padding: 0;
+}
+
+.games-list li {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.games-list li.active {
+  background: #e3f2fd;
+  font-weight: bold;
+}
+
+/* TeamRoom.css */
+.team-room {
+  padding: 20px;
+}
+
+.current-game {
+  background: #f5f5f5;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.game-info {
+  margin: 15px 0;
+}
+
+.game-progress {
+  font-weight: bold;
+  color: #2196F3;
+}
+
+.waiting-game {
+  text-align: center;
+  padding: 40px;
+}
+
+/* Reemplaza los estilos de transición con estos: */
+.game-transition-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #808080; /* Fondo gris completamente opaco */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.game-transition-overlay.exiting {
+  animation: fadeOut 0.5s ease-in forwards;
+}
+
+.game-transition-content {
+  text-align: center;
+  color: white;
+  padding: 2rem;
+  border-radius: 10px;
+  max-width: 80%;
+}
+
+.transition-game-icon {
+  font-size: 5rem;
+  margin-bottom: 2rem; /* Aumenté el margen inferior de 1.5rem a 2rem */
+  animation: slideInFromLeft 0.5s ease-out;
+}
+
+.transition-game-text {
+  font-size: 1.5rem;
+  margin-top: 1rem; /* Añadí margen superior para separar más del icono */
+  animation: slideInFromLeft 0.5s ease-out 0.2s both;
+}
+
+.transition-game-name {
+  font-size: 2rem;
+  font-weight: bold;
+  display: block;
+  margin-top: 0.8rem; /* Aumenté el margen superior del nombre */
+}
+
+@keyframes slideInFromLeft {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from { 
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeOut {
+  from { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to { 
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+/* Efecto de desenfoque para el contenido de fondo */
+.game-info-container.blurred {
+  filter: blur(2px);
+  opacity: 0.7;
+  transition: all 0.3s ease-out;
+}

@@ -1,9 +1,10 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import "../styles/help.css";
 
 const LayoutHelp = ({ children, userData }) => {
   const navigate = useNavigate();
+  const location = useLocation(); // Obtiene la URL actual
 
   return (
     <div className="body-help">
@@ -28,25 +29,25 @@ const LayoutHelp = ({ children, userData }) => {
         </div>
 
         <ul className="sidebar__list-help">
-          <li className="list__item-help list__item--active-help">
+          <li className={`list__item-help ${location.pathname === "/help" ? "list__item--active-help" : ""}`}>
             <a className="item__area-help" href="/help">
               <i className="fa-solid fa-circle-question"></i>
-              <span className="area__text-help area__text--active-help">Centro de ayuda</span>
+              <span className="area__text-help">Centro de ayuda</span>
             </a>
           </li>
-          <li className="list__item-help">
+          <li className={`list__item-help ${location.pathname === "/help/manual" ? "list__item--active-help" : ""}`}>
             <a className="item__area-help" href="/help/manual">
               <i className="fa-solid fa-book"></i>
               <span className="area__text-help">Manual de Usuario</span>
             </a>
           </li>
-          <li className="list__item-help">
+          <li className={`list__item-help ${location.pathname === "/help/tutorial" ? "list__item--active-help" : ""}`}>
             <a className="item__area-help" href="/help/tutorial">
               <i className="fa-solid fa-square-poll-vertical"></i>
               <span className="area__text-help">Tutorial</span>
             </a>
           </li>
-          <li className="list__item-help">
+          <li className={`list__item-help ${location.pathname === "/help/preguntasfrecuentes" ? "list__item--active-help" : ""}`}>
             <a className="item__area-help" href="/help/preguntasfrecuentes">
               <i className="fa-solid fa-clock-rotate-left"></i>
               <span className="area__text-help">Preguntas Frecuentes</span>
