@@ -7,7 +7,8 @@ import {
   editarPersonalizacion,
   saveTemaJuego,
   getTemasPorJuegoTotal,
-  deletePersonalization
+  deletePersonalization,
+  obtenerPersonalizacionPorId
 } from "../controllers/PersonalizeController.js";
 
 import { authMiddleware } from "../middleware/authMiddleware.js";
@@ -19,8 +20,9 @@ router.get("/tipo-juegos", getTipoJuegos);
 router.get("/temas-juego/:juegoId", getTemasPorJuego);
 router.post("/personalizacion", guardarPersonalizacion); 
 router.get("/personalizacion", getConfiguracionPersonalizada); 
-router.post("/editar_personalizacion", editarPersonalizacion);
+router.post("/editar-personalizacion", editarPersonalizacion);
 router.post("/agregar_contenido" ,authMiddleware, roleMiddleware(["Administrador"]), saveTemaJuego);
+router.post("/personalizacion-por-id" ,authMiddleware, roleMiddleware(["Profesor"]), obtenerPersonalizacionPorId);
 router.delete("/eliminar_personalizacion" ,authMiddleware, roleMiddleware(["Administrador","Profesor"]), deletePersonalization);
 router.get("/gettemas", getTemasPorJuegoTotal)
 

@@ -27,7 +27,7 @@ export const obtenerCursosPersonalizados = async (req, res) => {
                 FROM Personalizacion_TB p
                 LEFT JOIN ConfiguracionJuego_TB cj
                     ON cj.Personalizacion_ID_PK = p.Personalizacion_ID_PK
-                WHERE p.Usuario_ID_FK = @userId
+                WHERE p.Usuario_ID_FK = @userId AND p.Estado = 1
                 GROUP BY p.Personalizacion_ID_PK, p.Nombre_Personalizacion
             `);
 

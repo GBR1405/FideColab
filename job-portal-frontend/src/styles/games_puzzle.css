@@ -1,0 +1,137 @@
+.puzzle-game {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+  }
+
+  .puzzle-buffer-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transition: opacity 0.01s linear;
+    will-change: opacity;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+  }
+  
+  .puzzle-buffer-container.active {
+    opacity: 1;
+    z-index: 2;
+  }
+  
+  .puzzle-buffer-container.inactive {
+    opacity: 0;
+    z-index: 1;
+  }
+  
+  .puzzle-piece {
+    will-change: transform, left, top;
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    transition: all 0.05s linear !important;
+    pointer-events: auto;
+  }
+  
+  .puzzle-board-container {
+    display: flex;
+    gap: 20px;
+    margin: 20px 0;
+    height: 1000px;
+  }
+  
+  .reference-image {
+    width: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .reference-image img {
+    max-width: 100%;
+    max-height: 300px;
+    border: 2px solid #333;
+  }
+  
+  .puzzle-container {
+    position: relative;
+    background-color: #f0f0f0;
+    border: 2px solid #333;
+    overflow: hidden;
+    perspective: 1000px;
+    transform-style: preserve-3d;
+    height: 600px;
+  }
+  
+  .puzzle-piece.selected {
+    z-index: 10;
+    box-shadow: 0 0 10px rgba(255, 204, 0, 0.7);
+  }
+  
+  .puzzle-piece.correct {
+    border: 2px solid #4CAF50 !important;
+  }
+  
+  .puzzle-piece.moving {
+    z-index: 100;
+  }
+  
+  .piece-locked-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.3);
+  }
+  
+  .puzzle-progress {
+    width: 100%;
+    max-width: 500px;
+    margin: 10px 0;
+  }
+  
+  .progress-bar {
+    height: 20px;
+    background-color: #e0e0e0;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  
+  .progress-fill {
+    height: 100%;
+    background-color: #4CAF50;
+    transition: width 0.3s ease;
+  }
+  
+  .progress-text {
+    display: block;
+    margin-top: 5px;
+    font-weight: bold;
+  }
+  
+  .progress-change {
+    margin-left: 5px;
+  }
+  
+  .progress-change.up {
+    color: #4CAF50;
+  }
+  
+  .progress-change.down {
+    color: #f44336;
+  }
+  
+  .puzzle-instructions {
+    max-width: 600px;
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f8f8f8;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+  }

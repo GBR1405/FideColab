@@ -13,12 +13,10 @@ import { GenerarBitacora } from "../controllers/generalController.js";
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-
 export const generateStudentsReport = async (req, res) => {
   try {
     const pool = await poolPromise;
 
-    // Obtener el ID del rol "Estudiante"
     const roleQuery = await pool.request()
       .input("rol", "Estudiante")
       .query("SELECT Rol_ID_PK FROM Rol_TB WHERE Rol = @rol");
@@ -29,26 +27,35 @@ export const generateStudentsReport = async (req, res) => {
 
     const studentRoleId = roleQuery.recordset[0].Rol_ID_PK;
 
-    // Obtener los estudiantes
     const result = await pool.request()
       .input("rolId", studentRoleId)
       .query(`
-        SELECT Nombre, Apellido1, Apellido2, Correo, Estado 
-        FROM Usuario_TB 
-        WHERE Rol_ID_FK = @rolId
+        SELECT 
+          U.Nombre,
+          U.Apellido1,
+          U.Apellido2,
+          U.Correo,
+          U.Estado,
+          ISNULL(CONCAT('G', GC.Codigo_Grupo, ' - ', CC.Codigo_Curso), 'SIN CURSO') AS CursoVinculado
+        FROM Usuario_TB U
+        LEFT JOIN GrupoVinculado_TB GV ON U.Usuario_ID_PK = GV.Usuario_ID_FK
+        LEFT JOIN GrupoCurso_TB GC ON GV.GrupoCurso_ID_FK = GC.GrupoCurso_ID_PK
+        LEFT JOIN CodigoCurso_TB CC ON GC.Curso_ID_FK = CC.CodigoCurso_ID_PK
+        WHERE U.Rol_ID_FK = @rolId
+        ORDER BY 
+          CASE WHEN CC.Codigo_Curso IS NULL THEN 1 ELSE 0 END, 
+          GC.Codigo_Grupo ASC
       `);
 
     if (result.recordset.length === 0) {
       return res.status(404).json({ success: false, message: "No hay estudiantes registrados" });
     }
 
-    // Crear la carpeta "reports" si no existe
     const reportsDir = path.join(process.cwd(), "reports");
     if (!fs.existsSync(reportsDir)) {
       fs.mkdirSync(reportsDir, { recursive: true });
     }
 
-    // Descargar la imagen de la universidad
     const imageUrl = "https://www.coopeande1.com/sites/default/files/styles/420_width_retina/public/2021-01/u_fidelitas.png?itok=DC77XGsA";
     const imagePath = path.join(reportsDir, "u_fidelitas.png");
     const writer = fs.createWriteStream(imagePath);
@@ -62,66 +69,113 @@ export const generateStudentsReport = async (req, res) => {
     imageResponse.data.pipe(writer);
 
     writer.on('finish', async () => {
-      // Crear el PDF
-      const filename = `Estudiantes_${Date.now()}.pdf`;
+      const filename = `Reporte_Estudiantes_${new Date().toISOString().slice(0,10)}.pdf`;
       const filePath = path.join(reportsDir, filename);
-      const doc = new PDFDocument({ margin: 50 });
+      const doc = new PDFDocument({
+        margin: 40,
+        size: 'A4'
+      });
+
       const stream = fs.createWriteStream(filePath);
       doc.pipe(stream);
 
-      // Agregar "Universidad Fidelitas" a la izquierda y la imagen a la derecha
-      doc.fontSize(20).text("Universidad Fidelitas", { width: 400, align: "left" });
-      doc.image(imagePath, 450, 20, { width: 100 });  // Imagen a la derecha
-      doc.moveDown(2);
+      const primaryColor = '#003366';
+      const secondaryColor = '#666666';
+      const tableRowHeight = 31;
+      const studentsPerPage = 19;
+      let currentY = 80;
+      const totalPages = Math.ceil(result.recordset.length / studentsPerPage);
 
-      // Agregar cantidad de estudiantes y fecha de descarga
-      doc.fontSize(14).text(`Cantidad de Estudiantes: ${result.recordset.length}`, { align: "center" });
-      doc.moveDown(1);
-      doc.text(`Fecha de descarga: ${new Date().toLocaleString()}`, { align: "center" });
-      doc.moveDown(2);
+      const addHeader = () => {
+        doc.image(imagePath, 50, 20, { width: 80 });
+        doc.fontSize(18).font('Helvetica-Bold').fillColor(primaryColor)
+          .text('Universidad Fidelitas', 140, 30);
+        doc.fontSize(10).font('Helvetica').fillColor(secondaryColor)
+          .text('Sistema de Gestión Académica', 140, 55);
+        doc.moveTo(50, 80).lineTo(550, 80).lineWidth(2).stroke(primaryColor);
+        currentY = 100;
+      };
 
-      // Agregar título "Reporte de Estudiantes"
-      doc.fontSize(16).text("Reporte de Estudiantes", { align: "center" });
-      doc.moveDown(2);
+      const addTitle = () => {
+        currentY += 5;
+        doc.fontSize(16).font('Helvetica-Bold').fillColor(primaryColor)
+          .text('REPORTE DE ESTUDIANTES', 0, currentY, { align: 'center' });
+        currentY += 30;
+        doc.fontSize(12).font('Helvetica').fillColor('black')
+          .text(`Total de estudiantes: ${result.recordset.length}`, { align: 'center' });
+        doc.text(`Fecha de generación: ${new Date().toLocaleString()}`, { align: 'center' });
+        currentY += 40;
+      };
 
-      // Dibujar la tabla
-      const startX = 50; // Margen izquierdo
-      let startY = doc.y; // Posición inicial debajo del título
-      const columnWidths = [40, 100, 100, 180, 80]; // Ancho de cada columna
+      const drawTableHeader = () => {
+        const tableLeft = 50;
+        const columnWidths = [160, 170, 70, 120];
+        const tableWidth = columnWidths.reduce((a, b) => a + b, 0);
 
-      // Encabezados de la tabla
-      doc.fontSize(12).font("Helvetica-Bold");
-      doc.text("N°", startX, startY, { width: columnWidths[0], align: "center" });
-      doc.text("Nombre", startX + columnWidths[0], startY, { width: columnWidths[1], align: "center" });
-      doc.text("Apellido 1", startX + columnWidths[0] + columnWidths[1], startY, { width: columnWidths[2], align: "center" });
-      doc.text("Correo", startX + columnWidths[0] + columnWidths[1] + columnWidths[2], startY, { width: columnWidths[3], align: "center" });
-      doc.text("Estado", startX + columnWidths[0] + columnWidths[1] + columnWidths[2] + columnWidths[3], startY, { width: columnWidths[4], align: "center" });
+        doc.rect(tableLeft, currentY, tableWidth, tableRowHeight).fill(primaryColor);
 
-      // Línea separadora
-      startY += 20;
-      doc.moveTo(startX, startY).lineTo(startX + columnWidths.reduce((a, b) => a + b), startY).stroke();
-      startY += 5;
+        let x = tableLeft;
+        doc.fontSize(12).font('Helvetica-Bold').fillColor('white');
+        doc.text('Nombre estudiante', x + 5, currentY + 7, { width: columnWidths[0] - 10, align: 'center' });
+        x += columnWidths[0];
+        doc.text('Correo', x + 5, currentY + 7, { width: columnWidths[1] - 10, align: 'center' });
+        x += columnWidths[1];
+        doc.text('Estado', x + 5, currentY + 7, { width: columnWidths[2] - 10, align: 'center' });
+        x += columnWidths[2];
+        doc.text('Curso vinculado', x + 5, currentY + 7, { width: columnWidths[3] - 10, align: 'center' });
 
-      // Agregar los estudiantes
-      doc.font("Helvetica");
-      result.recordset.forEach((student, index) => {
-        doc.text(`${index + 1}`, startX, startY, { width: columnWidths[0], align: "center" });
-        doc.text(student.Nombre, startX + columnWidths[0], startY, { width: columnWidths[1], align: "center" });
-        doc.text(student.Apellido1, startX + columnWidths[0] + columnWidths[1], startY, { width: columnWidths[2], align: "center" });
-        doc.text(student.Correo, startX + columnWidths[0] + columnWidths[1] + columnWidths[2], startY, { width: columnWidths[3], align: "center" });
-        doc.text(student.Estado ? "Activo" : "Inactivo", startX + columnWidths[0] + columnWidths[1] + columnWidths[2] + columnWidths[3], startY, { width: columnWidths[4], align: "center" });
+        currentY += tableRowHeight;
+        return columnWidths;
+      };
 
-        startY += 20;
-        // Dibujar línea entre filas
-        doc.moveTo(startX, startY).lineTo(startX + columnWidths.reduce((a, b) => a + b), startY).stroke();
-        startY += 5;
-      });
+      for (let i = 0; i < totalPages; i++) {
+        if (i > 0) {
+          doc.addPage();
+        }
+
+        addHeader();
+        if (i === 0) addTitle();
+        const columnWidths = drawTableHeader();
+
+        doc.fontSize(10).font('Helvetica').fillColor('black');
+
+        const students = result.recordset.slice(i * studentsPerPage, (i + 1) * studentsPerPage);
+
+        students.forEach((student, index) => {
+          const tableLeft = 50;
+          const tableWidth = columnWidths.reduce((a, b) => a + b, 0);
+
+          if (index % 2 === 0) {
+            doc.rect(tableLeft, currentY, tableWidth, tableRowHeight).fill('#f5f5f5');
+          }
+
+          let x = tableLeft;
+          const nombreCompleto = `${student.Nombre} ${student.Apellido1} ${student.Apellido2}`.toUpperCase();
+
+          doc.fillColor('black').text(nombreCompleto, x + 5, currentY + 5, { width: columnWidths[0] - 10 });
+          x += columnWidths[0];
+          doc.text(student.Correo || '-', x + 5, currentY + 5, { width: columnWidths[1] - 10 });
+          x += columnWidths[1];
+
+          const estadoText = student.Estado ? 'ACTIVO' : 'INACTIVO';
+          doc.font('Helvetica-Bold').text(estadoText, x + 5, currentY + 5, { width: columnWidths[2] - 10, align: 'center' });
+          x += columnWidths[2];
+
+          doc.font('Helvetica').text(student.CursoVinculado || 'SIN CURSO', x + 5, currentY + 5, { width: columnWidths[3] - 10, align: 'center' });
+
+          doc.moveTo(tableLeft, currentY + tableRowHeight)
+            .lineTo(tableLeft + tableWidth, currentY + tableRowHeight)
+            .lineWidth(0.5)
+            .stroke('#dddddd');
+
+          currentY += tableRowHeight;
+        });
+      }
 
       doc.end();
 
       await GenerarBitacora(req.user.id, "Descarga de reporte de estudiantes", null);
 
-      // Esperar a que el PDF se haya escrito antes de enviarlo
       stream.on("finish", () => {
         res.download(filePath, filename, (err) => {
           if (err) {
@@ -129,13 +183,10 @@ export const generateStudentsReport = async (req, res) => {
             return res.status(500).json({ success: false, message: "Error al descargar PDF" });
           }
 
-          // Eliminar el archivo después de enviarlo
-          fs.unlink(imagePath, (unlinkErr) => {
-            if (unlinkErr) console.error("Error al eliminar la imagen:", unlinkErr);
-          });
-
-          fs.unlink(filePath, (unlinkErr) => {
-            if (unlinkErr) console.error("Error al eliminar el archivo PDF:", unlinkErr);
+          [imagePath, filePath].forEach(file => {
+            fs.unlink(file, (unlinkErr) => {
+              if (unlinkErr) console.error(`Error al eliminar ${file}:`, unlinkErr);
+            });
           });
         });
       });
@@ -146,6 +197,7 @@ export const generateStudentsReport = async (req, res) => {
     res.status(500).json({ success: false, message: "Error generando PDF" });
   }
 };
+
 
 export const generateProfesorReport = async (req, res) => {
   try {
@@ -160,104 +212,186 @@ export const generateProfesorReport = async (req, res) => {
       return res.status(404).json({ success: false, message: "Rol 'Profesor' no encontrado" });
     }
 
-    const ProfesorRoleId = roleQuery.recordset[0].Rol_ID_PK;
+    const profesorRoleId = roleQuery.recordset[0].Rol_ID_PK;
 
-    // Obtener los estudiantes
+    // Obtener los profesores con sus cursos vinculados
     const result = await pool.request()
-      .input("rolId", ProfesorRoleId)
+      .input("rolId", profesorRoleId)
       .query(`
-        SELECT Nombre, Apellido1, Apellido2, Correo, Estado 
-        FROM Usuario_TB 
-        WHERE Rol_ID_FK = @rolId
+        SELECT 
+          U.Nombre,
+          U.Apellido1,
+          U.Apellido2,
+          U.Correo,
+          U.Estado,
+          CASE 
+            WHEN COUNT(GC.GrupoCurso_ID_PK) = 0 THEN 'SIN CURSOS'
+            ELSE STRING_AGG(CONCAT('G', GC.Codigo_Grupo, '-', CC.Codigo_Curso), ', ') 
+          END AS CursosVinculados,
+          CASE WHEN COUNT(GC.GrupoCurso_ID_PK) = 0 THEN 1 ELSE 0 END AS SinCursos
+        FROM Usuario_TB U
+        LEFT JOIN GrupoVinculado_TB GV ON U.Usuario_ID_PK = GV.Usuario_ID_FK
+        LEFT JOIN GrupoCurso_TB GC ON GV.GrupoCurso_ID_FK = GC.GrupoCurso_ID_PK
+        LEFT JOIN CodigoCurso_TB CC ON GC.Curso_ID_FK = CC.CodigoCurso_ID_PK
+        WHERE U.Rol_ID_FK = @rolId
+        GROUP BY U.Usuario_ID_PK, U.Nombre, U.Apellido1, U.Apellido2, U.Correo, U.Estado
+        ORDER BY SinCursos, U.Apellido1, U.Apellido2, U.Nombre
       `);
 
     if (result.recordset.length === 0) {
       return res.status(404).json({ success: false, message: "No hay profesores registrados" });
     }
 
-    // Crear la carpeta "reports" si no existe
     const reportsDir = path.join(process.cwd(), "reports");
     if (!fs.existsSync(reportsDir)) {
       fs.mkdirSync(reportsDir, { recursive: true });
     }
 
-    // Descargar la imagen de la universidad
     const imageUrl = "https://www.coopeande1.com/sites/default/files/styles/420_width_retina/public/2021-01/u_fidelitas.png?itok=DC77XGsA";
     const imagePath = path.join(reportsDir, "u_fidelitas.png");
-    
-    const { data } = await axios.get(imageUrl, { responseType: 'arraybuffer' });
-    fs.writeFileSync(imagePath, Buffer.from(data));
+    const writer = fs.createWriteStream(imagePath);
 
-    // Crear el PDF
-    const filename = `Profesores_${Date.now()}.pdf`;
-    const filePath = path.join(reportsDir, filename);
-    const doc = new PDFDocument({ margin: 50 });
-    const stream = fs.createWriteStream(filePath);
-    doc.pipe(stream);
-
-    // Agregar "Universidad Fidelitas" a la izquierda y la imagen a la derecha
-    doc.fontSize(20).text("Universidad Fidélitas", { width: 400, align: "left" });
-    doc.image(imagePath, 450, 20, { width: 100 }); // Imagen a la derecha
-    doc.moveDown(2);
-
-    // Agregar cantidad de profesores y fecha de descarga
-    doc.fontSize(14).text(`Cantidad de Profesores: ${result.recordset.length}`, { align: "center" });
-    doc.moveDown(1);
-    doc.text(`Fecha de descarga: ${new Date().toLocaleString()}`, { align: "center" });
-    doc.moveDown(2);
-
-    // Agregar título "Reporte de Profesores"
-    doc.fontSize(16).text("Reporte de Profesores", { align: "center" });
-    doc.moveDown(2);
-
-    // Dibujar la tabla
-    const startX = 50;
-    let startY = doc.y;
-    const columnWidths = [40, 100, 100, 180, 80];
-
-    // Encabezados de la tabla
-    doc.fontSize(12).font("Helvetica-Bold");
-    doc.text("N°", startX, startY, { width: columnWidths[0], align: "center" });
-    doc.text("Nombre", startX + columnWidths[0], startY, { width: columnWidths[1], align: "center" });
-    doc.text("Apellido 1", startX + columnWidths[0] + columnWidths[1], startY, { width: columnWidths[2], align: "center" });
-    doc.text("Correo", startX + columnWidths[0] + columnWidths[1] + columnWidths[2], startY, { width: columnWidths[3], align: "center" });
-    doc.text("Estado", startX + columnWidths[0] + columnWidths[1] + columnWidths[2] + columnWidths[3], startY, { width: columnWidths[4], align: "center" });
-
-    startY += 20;
-    doc.moveTo(startX, startY).lineTo(startX + columnWidths.reduce((a, b) => a + b), startY).stroke();
-    startY += 5;
-
-    // Agregar los profesores 
-    doc.font("Helvetica");
-    result.recordset.forEach((profesor, index) => {
-      doc.text(`${index + 1}`, startX, startY, { width: columnWidths[0], align: "center" });
-      doc.text(profesor.Nombre, startX + columnWidths[0], startY, { width: columnWidths[1], align: "center" });
-      doc.text(profesor.Apellido1, startX + columnWidths[0] + columnWidths[1], startY, { width: columnWidths[2], align: "center" });
-      doc.text(profesor.Correo, startX + columnWidths[0] + columnWidths[1] + columnWidths[2], startY, { width: columnWidths[3], align: "center" });
-      doc.text(profesor.Estado ? "Activo" : "Inactivo", startX + columnWidths[0] + columnWidths[1] + columnWidths[2] + columnWidths[3], startY, { width: columnWidths[4], align: "center" });
-
-      startY += 20;
-      doc.moveTo(startX, startY).lineTo(startX + columnWidths.reduce((a, b) => a + b), startY).stroke();
-      startY += 5;
+    const imageResponse = await axios({
+      method: 'get',
+      url: imageUrl,
+      responseType: 'stream'
     });
 
-    await GenerarBitacora(req.user.id, "Descarga de reporte de Profesores", null);
+    imageResponse.data.pipe(writer);
 
-    doc.end();
+    writer.on('finish', async () => {
+      const filename = `Reporte_Profesores_${new Date().toISOString().slice(0,10)}.pdf`;
+      const filePath = path.join(reportsDir, filename);
+      const doc = new PDFDocument({
+        margin: 40,
+        size: 'A4'
+      });
 
-    stream.on("finish", () => {
-      res.download(filePath, filename, (err) => {
-        if (err) {
-          console.error("Error al enviar el PDF:", err);
-          return res.status(500).json({ success: false, message: "Error al descargar PDF" });
+      const stream = fs.createWriteStream(filePath);
+      doc.pipe(stream);
+
+      const primaryColor = '#003366';
+      const secondaryColor = '#666666';
+      const tableRowHeight = 31;
+      const professorsPerPage = 19;
+      let currentY = 80;
+      const totalPages = Math.ceil(result.recordset.length / professorsPerPage);
+
+      const addHeader = () => {
+        doc.image(imagePath, 50, 20, { width: 80 });
+        doc.fontSize(18).font('Helvetica-Bold').fillColor(primaryColor)
+          .text('Universidad Fidelitas', 140, 30);
+        doc.fontSize(10).font('Helvetica').fillColor(secondaryColor)
+          .text('Sistema de Gestión Académica', 140, 55);
+        doc.moveTo(50, 80).lineTo(550, 80).lineWidth(2).stroke(primaryColor);
+        currentY = 100;
+      };
+
+      const addTitle = () => {
+        currentY += 5;
+        doc.fontSize(16).font('Helvetica-Bold').fillColor(primaryColor)
+          .text('REPORTE DE PROFESORES', 0, currentY, { align: 'center' });
+        currentY += 30;
+        doc.fontSize(12).font('Helvetica').fillColor('black')
+          .text(`Total de profesores: ${result.recordset.length}`, { align: 'center' });
+        doc.text(`Fecha de generación: ${new Date().toLocaleString()}`, { align: 'center' });
+        currentY += 40;
+      };
+
+      const drawTableHeader = () => {
+        const tableLeft = 50;
+        const columnWidths = [160, 170, 70, 120];
+        const tableWidth = columnWidths.reduce((a, b) => a + b, 0);
+
+        doc.rect(tableLeft, currentY, tableWidth, tableRowHeight).fill(primaryColor);
+
+        let x = tableLeft;
+        doc.fontSize(12).font('Helvetica-Bold').fillColor('white');
+        doc.text('Nombre profesor', x + 5, currentY + 7, { width: columnWidths[0] - 10, align: 'center' });
+        x += columnWidths[0];
+        doc.text('Correo', x + 5, currentY + 7, { width: columnWidths[1] - 10, align: 'center' });
+        x += columnWidths[1];
+        doc.text('Estado', x + 5, currentY + 7, { width: columnWidths[2] - 10, align: 'center' });
+        x += columnWidths[2];
+        doc.text('Cursos vinculados', x + 5, currentY + 7, { width: columnWidths[3] - 10, align: 'center' });
+
+        currentY += tableRowHeight;
+        return columnWidths;
+      };
+
+      for (let i = 0; i < totalPages; i++) {
+        if (i > 0) {
+          doc.addPage();
         }
 
-        fs.unlink(filePath, (unlinkErr) => {
-          if (unlinkErr) console.error("Error al eliminar el archivo PDF:", unlinkErr);
-        });
+        addHeader();
+        if (i === 0) addTitle();
+        const columnWidths = drawTableHeader();
 
-        fs.unlink(imagePath, (unlinkErr) => {
-          if (unlinkErr) console.error("Error al eliminar la imagen:", unlinkErr);
+        doc.fontSize(10).font('Helvetica').fillColor('black');
+
+        const professors = result.recordset.slice(i * professorsPerPage, (i + 1) * professorsPerPage);
+
+        professors.forEach((professor, index) => {
+          const tableLeft = 50;
+          const tableWidth = columnWidths.reduce((a, b) => a + b, 0);
+
+          if (index % 2 === 0) {
+            doc.rect(tableLeft, currentY, tableWidth, tableRowHeight).fill('#f5f5f5');
+          }
+
+          let x = tableLeft;
+          const nombreCompleto = `${professor.Nombre} ${professor.Apellido1} ${professor.Apellido2}`.toUpperCase();
+
+          doc.fillColor('black').text(nombreCompleto, x + 5, currentY + 5, { width: columnWidths[0] - 10 });
+          x += columnWidths[0];
+          doc.text(professor.Correo || '-', x + 5, currentY + 5, { width: columnWidths[1] - 10 });
+          x += columnWidths[1];
+
+          // Estado sin color (solo texto)
+          const estadoText = professor.Estado ? 'ACTIVO' : 'INACTIVO';
+          doc.font('Helvetica').fillColor('black')
+             .text(estadoText, x + 5, currentY + 5, { width: columnWidths[2] - 10, align: 'center' });
+          x += columnWidths[2];
+
+          // Formatear cursos para mejor visualización
+          let cursosText = professor.CursosVinculados;
+          if (professor.CursosVinculados !== 'SIN CURSOS') {
+            // Reemplazar "GX - SC-XXX" por "GX-SCXXX" para evitar saltos de línea
+            cursosText = professor.CursosVinculados.replace(/G(\d+)\s*-\s*([A-Za-z]+)-(\d+)/g, 'G$1-$2$3');
+          }
+          
+          doc.text(cursosText, x + 5, currentY + 5, { 
+            width: columnWidths[3] - 10, 
+            align: 'center',
+            lineBreak: false
+          });
+
+          doc.moveTo(tableLeft, currentY + tableRowHeight)
+            .lineTo(tableLeft + tableWidth, currentY + tableRowHeight)
+            .lineWidth(0.5)
+            .stroke('#dddddd');
+
+          currentY += tableRowHeight;
+        });
+      }
+
+      doc.end();
+
+      await GenerarBitacora(req.user.id, "Descarga de reporte de profesores", null);
+
+      stream.on("finish", () => {
+        res.download(filePath, filename, (err) => {
+          if (err) {
+            console.error("Error al enviar el PDF:", err);
+            return res.status(500).json({ success: false, message: "Error al descargar PDF" });
+          }
+
+          [imagePath, filePath].forEach(file => {
+            fs.unlink(file, (unlinkErr) => {
+              if (unlinkErr) console.error(`Error al eliminar ${file}:`, unlinkErr);
+            });
+          });
         });
       });
     });
@@ -272,102 +406,167 @@ export const generatePartidaReport = async (req, res) => {
   try {
     const pool = await poolPromise;
 
-    // Obtener todos los registros de la tabla Partida_TB
     const result = await pool.request().query(`
       SELECT Partida_ID_PK, FechaInicio, FechaFin, Profesor_ID_FK, EstadoPartida
       FROM Partida_TB
     `);
 
-    // Crear la carpeta "reports" si no existe
     const reportsDir = path.join(process.cwd(), "reports");
     if (!fs.existsSync(reportsDir)) {
       fs.mkdirSync(reportsDir, { recursive: true });
     }
 
-    // Descargar la imagen de la universidad
     const imageUrl = "https://www.coopeande1.com/sites/default/files/styles/420_width_retina/public/2021-01/u_fidelitas.png?itok=DC77XGsA";
     const imagePath = path.join(reportsDir, "u_fidelitas.png");
+    const writer = fs.createWriteStream(imagePath);
 
-    const { data } = await axios.get(imageUrl, { responseType: "arraybuffer" });
-    fs.writeFileSync(imagePath, Buffer.from(data));
+    const imageResponse = await axios({
+      method: 'get',
+      url: imageUrl,
+      responseType: 'stream'
+    });
 
-    // Crear el PDF
-    const filename = `Partidas_${Date.now()}.pdf`;
-    const filePath = path.join(reportsDir, filename);
-    const doc = new PDFDocument({ margin: 50 });
-    const stream = fs.createWriteStream(filePath);
-    doc.pipe(stream);
+    imageResponse.data.pipe(writer);
 
-    // Agregar "Universidad Fidelitas" a la izquierda y la imagen a la derecha
-    doc.fontSize(20).text("Universidad Fidélitas", { width: 400, align: "left" });
-    doc.image(imagePath, 450, 20, { width: 100 }); // Imagen a la derecha
-    doc.moveDown(2);
-
-    // Agregar cantidad de partidas y fecha de descarga
-    doc.fontSize(14).text(`Cantidad de Partidas: ${result.recordset.length}`, { align: "center" });
-    doc.moveDown(1);
-    doc.text(`Fecha de descarga: ${new Date().toLocaleString()}`, { align: "center" });
-    doc.moveDown(2);
-
-    // Agregar título "Reporte de Partidas"
-    doc.fontSize(16).text("Reporte de Partidas", { align: "center" });
-    doc.moveDown(2);
-
-    // Dibujar la tabla
-    const startX = 50;
-    let startY = doc.y;
-    const columnWidths = [40, 100, 100, 180, 80];
-    const rowHeight = 60; // Establecer la altura de cada fila (más ancha)
-
-    // Encabezados de la tabla
-    doc.fontSize(12).font("Helvetica-Bold");
-    doc.text("N°", startX, startY, { width: columnWidths[0], align: "center" });
-    doc.text("Fecha Inicio", startX + columnWidths[0], startY, { width: columnWidths[1], align: "center" });
-    doc.text("Fecha Fin", startX + columnWidths[0] + columnWidths[1], startY, { width: columnWidths[2], align: "center" });
-    doc.text("Profesor ID", startX + columnWidths[0] + columnWidths[1] + columnWidths[2], startY, { width: columnWidths[3], align: "center" });
-    doc.text("Estado", startX + columnWidths[0] + columnWidths[1] + columnWidths[2] + columnWidths[3], startY, { width: columnWidths[4], align: "center" });
-
-    startY += 30; // Aumentamos la altura de la fila para los encabezados
-    doc.moveTo(startX, startY).lineTo(startX + columnWidths.reduce((a, b) => a + b), startY).stroke();
-    startY += 5;
-
-    if (result.recordset.length > 0) {
-      // Agregar las partidas si hay registros
-      doc.font("Helvetica");
-      result.recordset.forEach((partida, index) => {
-        // Modificar la posición Y para cada fila
-        doc.text(`${index + 1}`, startX, startY, { width: columnWidths[0], align: "center" });
-        doc.text(partida.FechaInicio, startX + columnWidths[0], startY, { width: columnWidths[1], align: "center" });
-        doc.text(partida.FechaFin || "N/A", startX + columnWidths[0] + columnWidths[1], startY, { width: columnWidths[2], align: "center" });
-        doc.text(partida.Profesor_ID_FK, startX + columnWidths[0] + columnWidths[1] + columnWidths[2], startY, { width: columnWidths[3], align: "center" });
-        doc.text(partida.EstadoPartida, startX + columnWidths[0] + columnWidths[1] + columnWidths[2] + columnWidths[3], startY, { width: columnWidths[4], align: "center" });
-
-        startY += rowHeight; // Aumentamos la altura de cada fila
-        doc.moveTo(startX, startY).lineTo(startX + columnWidths.reduce((a, b) => a + b), startY).stroke();
-        startY += 5;
+    writer.on('finish', async () => {
+      const filename = `Reporte_Partidas_${new Date().toISOString().slice(0,10)}.pdf`;
+      const filePath = path.join(reportsDir, filename);
+      const doc = new PDFDocument({
+        margin: 40,
+        size: 'A4'
       });
-    } else {
-      // Si no hay registros, mostrar mensaje en la tabla
-      startY += 10;
-      doc.fontSize(14).text("No hay partidas registradas.", startX, startY, { align: "center" });
-    }
 
-    await GenerarBitacora(req.user.id, "Descarga de reporte de Partidas", null);
-    doc.end();
+      const stream = fs.createWriteStream(filePath);
+      doc.pipe(stream);
 
-    stream.on("finish", () => {
-      res.download(filePath, filename, (err) => {
-        if (err) {
-          console.error("Error al enviar el PDF:", err);
-          return res.status(500).json({ success: false, message: "Error al descargar PDF" });
+      const primaryColor = '#003366';
+      const secondaryColor = '#666666';
+      const tableRowHeight = 35;
+      const partidasPerPage = 15;
+      let currentY = 80;
+      const totalPages = Math.ceil(result.recordset.length / partidasPerPage);
+
+      const addHeader = () => {
+        doc.image(imagePath, 50, 20, { width: 80 });
+        doc.fontSize(18).font('Helvetica-Bold').fillColor(primaryColor)
+          .text('Universidad Fidelitas', 140, 30);
+        doc.fontSize(10).font('Helvetica').fillColor(secondaryColor)
+          .text('Sistema de Gestión Académica', 140, 55);
+        doc.moveTo(50, 80).lineTo(550, 80).lineWidth(2).stroke(primaryColor);
+        currentY = 100;
+      };
+
+      const addTitle = () => {
+        currentY += 5;
+        doc.fontSize(16).font('Helvetica-Bold').fillColor(primaryColor)
+          .text('REPORTE DE PARTIDAS', 0, currentY, { align: 'center' });
+        currentY += 30;
+        doc.fontSize(12).font('Helvetica').fillColor('black')
+          .text(`Total de partidas: ${result.recordset.length}`, { align: 'center' });
+        doc.text(`Fecha de generación: ${new Date().toLocaleString()}`, { align: 'center' });
+        currentY += 40;
+      };
+
+      const drawTableHeader = () => {
+        const tableLeft = 50;
+        const columnWidths = [50, 100, 100, 100, 100];
+        const tableWidth = columnWidths.reduce((a, b) => a + b, 0);
+
+        doc.rect(tableLeft, currentY, tableWidth, tableRowHeight).fill(primaryColor);
+
+        let x = tableLeft;
+        doc.fontSize(12).font('Helvetica-Bold').fillColor('white');
+        doc.text('ID', x + columnWidths[0]/2, currentY + 7, { width: columnWidths[0], align: 'center' });
+        x += columnWidths[0];
+        doc.text('Fecha Inicio', x + 5, currentY + 7, { width: columnWidths[1] - 10, align: 'center' });
+        x += columnWidths[1];
+        doc.text('Fecha Fin', x + 5, currentY + 7, { width: columnWidths[2] - 10, align: 'center' });
+        x += columnWidths[2];
+        doc.text('Profesor ID', x + 5, currentY + 7, { width: columnWidths[3] - 10, align: 'center' });
+        x += columnWidths[3];
+        doc.text('Estado', x + 5, currentY + 7, { width: columnWidths[4] - 10, align: 'center' });
+
+        currentY += tableRowHeight;
+        return columnWidths;
+      };
+
+      for (let i = 0; i < totalPages; i++) {
+        if (i > 0) {
+          doc.addPage();
         }
 
-        fs.unlink(filePath, (unlinkErr) => {
-          if (unlinkErr) console.error("Error al eliminar el archivo PDF:", unlinkErr);
-        });
+        addHeader();
+        if (i === 0) addTitle();
+        const columnWidths = drawTableHeader();
 
-        fs.unlink(imagePath, (unlinkErr) => {
-          if (unlinkErr) console.error("Error al eliminar la imagen:", unlinkErr);
+        doc.fontSize(10).font('Helvetica').fillColor('black');
+
+        const partidas = result.recordset.slice(i * partidasPerPage, (i + 1) * partidasPerPage);
+
+        partidas.forEach((partida, index) => {
+          const tableLeft = 50;
+          const tableWidth = columnWidths.reduce((a, b) => a + b, 0);
+
+          if (index % 2 === 0) {
+            doc.rect(tableLeft, currentY, tableWidth, tableRowHeight).fill('#f5f5f5');
+          }
+
+          let x = tableLeft;
+          doc.text(partida.Partida_ID_PK.toString(), x + columnWidths[0]/2, currentY + 5, { 
+            width: columnWidths[0], align: 'center' 
+          });
+          x += columnWidths[0];
+          
+          const fechaInicio = partida.FechaInicio ? new Date(partida.FechaInicio).toLocaleDateString() : 'N/A';
+          doc.text(fechaInicio, x + 5, currentY + 5, { 
+            width: columnWidths[1] - 10, align: 'center' 
+          });
+          x += columnWidths[1];
+          
+          const fechaFin = partida.FechaFin ? new Date(partida.FechaFin).toLocaleDateString() : 'N/A';
+          doc.text(fechaFin, x + 5, currentY + 5, { 
+            width: columnWidths[2] - 10, align: 'center' 
+          });
+          x += columnWidths[2];
+          
+          doc.text(partida.Profesor_ID_FK || 'N/A', x + 5, currentY + 5, { 
+            width: columnWidths[3] - 10, align: 'center' 
+          });
+          x += columnWidths[3];
+          
+          doc.text(partida.EstadoPartida || 'N/A', x + 5, currentY + 5, { 
+            width: columnWidths[4] - 10, align: 'center' 
+          });
+
+          doc.moveTo(tableLeft, currentY + tableRowHeight)
+            .lineTo(tableLeft + tableWidth, currentY + tableRowHeight)
+            .lineWidth(0.5)
+            .stroke('#dddddd');
+
+          currentY += tableRowHeight;
+        });
+      }
+
+      if (result.recordset.length === 0) {
+        doc.fontSize(14).text("No hay partidas registradas.", { align: 'center' });
+      }
+
+      doc.end();
+
+      await GenerarBitacora(req.user.id, "Descarga de reporte de Partidas", null);
+
+      stream.on("finish", () => {
+        res.download(filePath, filename, (err) => {
+          if (err) {
+            console.error("Error al enviar el PDF:", err);
+            return res.status(500).json({ success: false, message: "Error al descargar PDF" });
+          }
+
+          [imagePath, filePath].forEach(file => {
+            fs.unlink(file, (unlinkErr) => {
+              if (unlinkErr) console.error(`Error al eliminar ${file}:`, unlinkErr);
+            });
+          });
         });
       });
     });
@@ -381,105 +580,165 @@ export const generatePartidaReport = async (req, res) => {
 
 export const generateBitacoraReport = async (req, res) => {
   try {
-    console.log("Generando reporte de bitácora...");
-
     const pool = await poolPromise;
     const result = await pool.request().query(`
-      SELECT B.Bitacora_ID_PK, 
-             U.Nombre + ' ' + U.Apellido1 + ' ' + U.Apellido2 AS UsuarioNombre,
-             B.Accion, 
-             B.Error, 
-             B.Fecha 
+      SELECT 
+        U.Nombre + ' ' + U.Apellido1 + ' ' + U.Apellido2 AS UsuarioNombre,
+        B.Accion, 
+        B.Error, 
+        B.Fecha 
       FROM Bitacora_TB B
       INNER JOIN Usuario_TB U ON B.Usuario_ID_FK = U.Usuario_ID_PK
       ORDER BY B.Fecha DESC
     `);
 
-    console.log("Registros encontrados:", result.recordset.length);
-
-    // Crear directorio si no existe
     const reportsDir = path.join(process.cwd(), "reports");
     if (!fs.existsSync(reportsDir)) {
       fs.mkdirSync(reportsDir, { recursive: true });
-      console.log("Carpeta 'reports' creada.");
     }
 
-    const filename = `Bitacora_${Date.now()}.pdf`;
-    const filePath = path.join(reportsDir, filename);
+    const imageUrl = "https://www.coopeande1.com/sites/default/files/styles/420_width_retina/public/2021-01/u_fidelitas.png?itok=DC77XGsA";
+    const imagePath = path.join(reportsDir, "u_fidelitas.png");
+    const writer = fs.createWriteStream(imagePath);
 
-    // Crear PDF
-    const doc = new PDFDocument({ margin: 50 });
-    const stream = fs.createWriteStream(filePath);
-    doc.pipe(stream);
+    const imageResponse = await axios({
+      method: 'get',
+      url: imageUrl,
+      responseType: 'stream'
+    });
 
-    // Título
-    doc.fontSize(18).text("Bitácora de Movimientos y Errores", { align: "center" });
-    doc.moveDown(2);
+    imageResponse.data.pipe(writer);
 
-    // Configuración de la tabla
-    const startX = 50;
-    let startY = doc.y;
-    const columnWidths = [40, 200, 150, 250, 100]; // Ampliamos la columna de "Acción"
-    const rowPadding = 10; // Espaciado interno de cada celda
+    writer.on('finish', async () => {
+      const filename = `Reporte_Bitacora_${new Date().toISOString().slice(0, 10)}.pdf`;
+      const filePath = path.join(reportsDir, filename);
+      const doc = new PDFDocument({ margin: 40, size: 'A4' });
+      const stream = fs.createWriteStream(filePath);
+      doc.pipe(stream);
 
-    doc.fontSize(12).font("Helvetica-Bold");
-    doc.text("ID", startX, startY, { width: columnWidths[0], align: "center" });
-    doc.text("Usuario", startX + columnWidths[0], startY, { width: columnWidths[1], align: "center" });
-    doc.text("Acción", startX + columnWidths[0] + columnWidths[1], startY, { width: columnWidths[2], align: "center" });
-    doc.text("Error", startX + columnWidths[0] + columnWidths[1] + columnWidths[2], startY, { width: columnWidths[3], align: "center" });
-    doc.text("Fecha", startX + columnWidths[0] + columnWidths[1] + columnWidths[2] + columnWidths[3], startY, { width: columnWidths[4], align: "center" });
+      const primaryColor = '#003366';
+      const secondaryColor = '#666666';
+      const baseRowHeight = 25;
+      const entriesPerPage = 12;
+      let currentY = 80;
+      const totalPages = Math.ceil(result.recordset.length / entriesPerPage);
 
-    // Línea bajo el encabezado
-    startY += 20;
-    doc.moveTo(startX, startY).lineTo(startX + columnWidths.reduce((a, b) => a + b), startY).stroke();
-    startY += 5;
+      const addHeader = () => {
+        doc.image(imagePath, 50, 20, { width: 80 });
+        doc.fontSize(18).font('Helvetica-Bold').fillColor(primaryColor)
+          .text('Universidad Fidelitas', 140, 30);
+        doc.fontSize(10).font('Helvetica').fillColor(secondaryColor)
+          .text('Sistema de Gestión Académica', 140, 55);
+        doc.moveTo(50, 80).lineTo(550, 80).lineWidth(2).stroke(primaryColor);
+        currentY = 100;
+      };
 
-    // Si hay registros, los agregamos
-    if (result.recordset.length > 0) {
-      doc.font("Helvetica");
-      result.recordset.forEach((entry) => {
-        // Determinar la altura dinámica de la fila según el texto más largo
-        const textHeights = [
-          doc.heightOfString(entry.UsuarioNombre, { width: columnWidths[1] }),
-          doc.heightOfString(entry.Accion, { width: columnWidths[2] }),
-          doc.heightOfString(entry.Error || "N/A", { width: columnWidths[3] })
-        ];
-        const maxTextHeight = Math.max(...textHeights) + rowPadding * 2;
+      const addTitle = () => {
+        currentY += 5;
+        doc.fontSize(16).font('Helvetica-Bold').fillColor(primaryColor)
+          .text('REPORTE DE BITÁCORA', 0, currentY, { align: 'center' });
+        currentY += 30;
+        doc.fontSize(12).font('Helvetica').fillColor('black')
+          .text(`Total de registros: ${result.recordset.length}`, { align: 'center' });
+        doc.text(`Fecha de generación: ${new Date().toLocaleString()}`, { align: 'center' });
+        currentY += 40;
+      };
 
-        // Dibujar cada celda alineada
-        doc.text(`${entry.Bitacora_ID_PK}`, startX, startY, { width: columnWidths[0], align: "center" });
-        doc.text(entry.UsuarioNombre, startX + columnWidths[0], startY, { width: columnWidths[1], align: "center" });
-        doc.text(entry.Accion, startX + columnWidths[0] + columnWidths[1], startY, { width: columnWidths[2], align: "center" });
-        doc.text(entry.Error || "N/A", startX + columnWidths[0] + columnWidths[1] + columnWidths[2], startY, { width: columnWidths[3], align: "center" });
-        doc.text(entry.Fecha ? new Date(entry.Fecha).toLocaleString() : "N/A", startX + columnWidths[0] + columnWidths[1] + columnWidths[2] + columnWidths[3], startY, { width: columnWidths[4], align: "center" });
+      const drawTableHeader = () => {
+        const tableLeft = 50;
+        const columnWidths = [120, 120, 165, 100];
+        const tableWidth = columnWidths.reduce((a, b) => a + b, 0);
 
-        // Dibujar líneas de separación para toda la fila
-        startY += maxTextHeight;
-        doc.moveTo(startX, startY).lineTo(startX + columnWidths.reduce((a, b) => a + b), startY).stroke();
-        startY += 5;
-      });
-    } else {
-      // Si no hay registros, mostrar mensaje en la tabla
-      startY += 10;
-      doc.fontSize(14).text("No hay registros en la bitácora.", startX, startY, { align: "center" });
-    }
+        doc.rect(tableLeft, currentY, tableWidth, baseRowHeight).fill(primaryColor);
 
-    // Registrar en la bitácora
-    await GenerarBitacora(req.user.id, "Descarga de reporte de Bitácora", null);
+        let x = tableLeft;
+        doc.fontSize(12).font('Helvetica-Bold').fillColor('white');
+        doc.text('Usuario', x + 5, currentY + 7, { width: columnWidths[0] - 10, align: 'center' });
+        x += columnWidths[0];
+        doc.text('Acción', x + 5, currentY + 7, { width: columnWidths[1] - 10, align: 'center' });
+        x += columnWidths[1];
+        doc.text('Error', x + 5, currentY + 7, { width: columnWidths[2] - 10, align: 'center' });
+        x += columnWidths[2];
+        doc.text('Fecha', x + 5, currentY + 7, { width: columnWidths[3] - 10, align: 'center' });
 
-    doc.end();
+        currentY += baseRowHeight;
+        return { columnWidths, tableLeft };
+      };
 
-    stream.on("finish", () => {
-      console.log("PDF generado correctamente.");
-      res.download(filePath, filename, (err) => {
-        if (err) {
-          console.error("Error al enviar el PDF:", err);
-          return res.status(500).json({ success: false, message: "Error al descargar PDF" });
-        }
+      for (let i = 0; i < totalPages; i++) {
+        if (i > 0) doc.addPage();
+        addHeader();
+        if (i === 0) addTitle();
+        const { columnWidths, tableLeft } = drawTableHeader();
 
-        console.log("Archivo enviado al cliente.");
-        fs.unlink(filePath, (unlinkErr) => {
-          if (unlinkErr) console.error("Error al eliminar el archivo PDF:", unlinkErr);
+        doc.fontSize(10).font('Helvetica').fillColor('black');
+
+        const entries = result.recordset.slice(i * entriesPerPage, (i + 1) * entriesPerPage);
+
+        entries.forEach((entry, index) => {
+          const tableWidth = columnWidths.reduce((a, b) => a + b, 0);
+          const rowHeight = Math.max(
+            doc.heightOfString(entry.Accion, { width: columnWidths[1] - 10 }) + 10,
+            doc.heightOfString(entry.Error || 'N/A', { width: columnWidths[2] - 10 }) + 10,
+            baseRowHeight
+          );
+
+          if (index % 2 === 0) {
+            doc.rect(tableLeft, currentY, tableWidth, rowHeight).fill('#f5f5f5');
+          }
+
+          let x = tableLeft;
+
+          doc.fillColor('black').text(entry.UsuarioNombre, x + 5, currentY + 5, {
+            width: columnWidths[0] - 10
+          });
+          x += columnWidths[0];
+
+          doc.text(entry.Accion, x + 5, currentY + 5, {
+            width: columnWidths[1] - 10
+          });
+          x += columnWidths[1];
+
+          doc.text(entry.Error || 'N/A', x + 5, currentY + 5, {
+            width: columnWidths[2] - 10
+          });
+          x += columnWidths[2];
+
+          const fecha = entry.Fecha ? new Date(entry.Fecha).toLocaleString() : 'N/A';
+          doc.text(fecha, x + 5, currentY + 5, {
+            width: columnWidths[3] - 10,
+            align: 'center'
+          });
+
+          doc.moveTo(tableLeft, currentY + rowHeight)
+            .lineTo(tableLeft + tableWidth, currentY + rowHeight)
+            .lineWidth(0.5)
+            .stroke('#dddddd');
+
+          currentY += rowHeight;
+        });
+      }
+
+      if (result.recordset.length === 0) {
+        doc.fontSize(14).text("No hay registros en la bitácora.", { align: 'center' });
+      }
+
+      doc.end();
+
+      await GenerarBitacora(req.user.id, "Descarga de reporte de Bitácora", null);
+
+      stream.on("finish", () => {
+        res.download(filePath, filename, (err) => {
+          if (err) {
+            console.error("Error al enviar el PDF:", err);
+            return res.status(500).json({ success: false, message: "Error al descargar PDF" });
+          }
+
+          [imagePath, filePath].forEach(file => {
+            fs.unlink(file, (unlinkErr) => {
+              if (unlinkErr) console.error(`Error al eliminar ${file}:`, unlinkErr);
+            });
+          });
         });
       });
     });
@@ -489,6 +748,12 @@ export const generateBitacoraReport = async (req, res) => {
     res.status(500).json({ success: false, message: "Error generando PDF" });
   }
 };
+
+function generatePassword(name) {
+  const randomNumber = Math.floor(10000 + Math.random() * 90000);
+  return `${name}${randomNumber}`;
+}
+
 
 export const agregarCurso = async (req, res) => {
   const { nombreCurso, codigoCurso } = req.body;
@@ -580,6 +845,33 @@ export const obtenerUltimoGrupoCurso = async (req, res) => {
   } catch (error) {
       console.error("Error obteniendo el último grupo:", error);
       res.status(500).json({ error: "Error obteniendo el último grupo." });
+  }
+};
+
+export const obtenerBitacoraDescargas = async (req, res) => {
+  try {
+      const pool = await poolPromise;
+      const result = await pool.request()
+          .query(`
+              SELECT 
+                  b.Bitacora_ID_PK AS id,
+                  CONCAT(u.Nombre, ' ', u.Apellido1, ' ', u.Apellido2) AS usuario,
+                  b.Accion AS accion,
+                  b.Fecha AS fecha
+              FROM 
+                  Bitacora_TB b
+              INNER JOIN 
+                  Usuario_TB u ON b.Usuario_ID_FK = u.Usuario_ID_PK
+              WHERE 
+                  b.Accion LIKE 'Descarga%'
+              ORDER BY 
+                  b.Fecha DESC
+          `);
+
+      res.json(result.recordset);
+  } catch (error) {
+      console.error("Error obteniendo la bitácora de descargas:", error);
+      res.status(500).json({ error: "Error obteniendo la bitácora de descargas." });
   }
 };
 
@@ -919,77 +1211,261 @@ export const asignarGrupo = async (req, res) => {
 
 
 // Función para generar una contraseña aleatoria
-function generatePassword(name) {
-  const randomNumber = Math.floor(10000 + Math.random() * 90000);
-  return `${name}${randomNumber}`;
-}
-
-// Función para generar el PDF
 async function generatePDF(profesores) {
-  const pdf = new PDFDocument();
-  const filePath = `./profesores_${Date.now()}.pdf`;
-  const writeStream = fs.createWriteStream(filePath);
+  // Configurar el documento PDF
+  const pdf = new PDFDocument({
+    margin: 40,
+    size: 'A4',
+    bufferPages: true // Para manejar múltiples páginas
+  });
 
-  // Pipe el PDF al archivo
+  // Crear directorio si no existe
+  const reportsDir = path.join(process.cwd(), "reports");
+  if (!fs.existsSync(reportsDir)) {
+    fs.mkdirSync(reportsDir, { recursive: true });
+  }
+
+  const filePath = path.join(reportsDir, `Credenciales_Profesores_${new Date().toISOString().slice(0,10)}.pdf`);
+  const writeStream = fs.createWriteStream(filePath);
   pdf.pipe(writeStream);
 
-  // Título de la página
-  pdf.fontSize(20).text("Credenciales de Profesores", { align: "center" });
-  pdf.moveDown(2);
+  // Estilos y colores
+  const primaryColor = '#003366'; // Azul institucional
+  const secondaryColor = '#666666';
+  const tableRowHeight = 30;
+  const tableMargin = 50;
+  const professorsPerPage = 20;
+  let currentY = 80;
+  let currentPage = 1;
 
-  // Dibujar la cabecera de la tabla con fondo azul
-  const startX = 50;
-  let startY = pdf.y;
-  const columnWidths = [100, 100, 100, 100, 100]; // Ancho de cada columna
-
-  pdf.fillColor('#3b82f6')  // Fondo azul
-    .rect(startX, startY, columnWidths.reduce((a, b) => a + b), 30)  // Cabecera de la tabla
-    .fill()
-    .stroke();
-
-  pdf.fillColor('#FFFFFF')  // Color del texto
-    .fontSize(12)
-    .text('Correo', startX, startY + 7, { width: columnWidths[0], align: 'center' })
-    .text('Contraseña', startX + columnWidths[0], startY + 7, { width: columnWidths[1], align: 'center' })
-    .text('Nombre', startX + columnWidths[0] + columnWidths[1], startY + 7, { width: columnWidths[2], align: 'center' })
-    .text('Apellido', startX + columnWidths[0] + columnWidths[1] + columnWidths[2], startY + 7, { width: columnWidths[3], align: 'center' })
-    .text('Género', startX + columnWidths[0] + columnWidths[1] + columnWidths[2] + columnWidths[3], startY + 7, { width: columnWidths[4], align: 'center' });
+  // Descargar y agregar logo de la universidad
+  const imageUrl = "https://www.coopeande1.com/sites/default/files/styles/420_width_retina/public/2021-01/u_fidelitas.png?itok=DC77XGsA";
+  const imagePath = path.join(reportsDir, "u_fidelitas_temp.png");
   
-  pdf.moveDown();
+  try {
+    const { data } = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+    fs.writeFileSync(imagePath, Buffer.from(data));
+    
+    // Función para agregar header
+    const addHeader = () => {
+      pdf.image(imagePath, 50, 20, { width: 80 });
+      pdf.fontSize(18).font('Helvetica-Bold').fillColor(primaryColor)
+        .text('Universidad Fidelitas', 140, 30);
+      pdf.fontSize(10).font('Helvetica').fillColor(secondaryColor)
+        .text('Sistema de Gestión Académica', 140, 55);
+      pdf.moveTo(50, 80).lineTo(550, 80).lineWidth(2).stroke(primaryColor);
+      currentY = 100;
+    };
 
-  // Línea separadora entre el encabezado y las filas
-  startY += 30;
-  pdf.moveTo(startX, startY).lineTo(startX + columnWidths.reduce((a, b) => a + b), startY).stroke();
-  startY += 5;
+    // Función para agregar footer
+    const addFooter = () => {
+      pdf.fontSize(10).font('Helvetica').fillColor(secondaryColor)
+        .text(`Página ${currentPage}`, 50, pdf.page.height - 40, { align: 'left' });
+      pdf.text(`Generado el: ${new Date().toLocaleDateString()}`, 
+              50, pdf.page.height - 40, { align: 'right' });
+    };
 
-  // Añadir filas de la tabla
-  profesores.forEach((prof, index) => {
-    pdf.rect(startX, startY, columnWidths.reduce((a, b) => a + b), 30)  // Borde de las filas
-      .fill('#FFFFFF')  // Color de fondo de las filas
-      .stroke();
+    // Función para verificar espacio y agregar nueva página si es necesario
+    const checkSpace = (requiredHeight) => {
+      if (currentY + requiredHeight > pdf.page.height - 60) {
+        pdf.addPage();
+        currentPage++;
+        currentY = 80;
+        addHeader();
+        addFooter();
+        return true;
+      }
+      return false;
+    };
 
-    pdf.fillColor('#000000')
-      .text(prof.email, startX, startY + 7, { width: columnWidths[0], align: 'center' })
-      .text(prof.generatedPassword, startX + columnWidths[0], startY + 7, { width: columnWidths[1], align: 'center' })
-      .text(prof.name, startX + columnWidths[0] + columnWidths[1], startY + 7, { width: columnWidths[2], align: 'center' })
-      .text(prof.lastName1, startX + columnWidths[0] + columnWidths[1] + columnWidths[2], startY + 7, { width: columnWidths[3], align: 'center' })
-      .text(prof.generoId === 1 ? 'Masculino' : 'Femenino', startX + columnWidths[0] + columnWidths[1] + columnWidths[2] + columnWidths[3], startY + 7, { width: columnWidths[4], align: 'center' });
+    // Agregar primera página con header y footer
+    addHeader();
+    addFooter();
 
-    // Línea separadora entre las filas
-    startY += 30;
-    pdf.moveTo(startX, startY).lineTo(startX + columnWidths.reduce((a, b) => a + b), startY).stroke();
-    startY += 5;
-  });
+    // Título del reporte
+    pdf.fontSize(16).font('Helvetica-Bold').fillColor(primaryColor)
+      .text('CREDENCIALES DE PROFESORES', { align: 'center' });
+    currentY += 30;
 
-  // Terminar el PDF
-  pdf.end();
+    pdf.fontSize(12).font('Helvetica').fillColor('black')
+      .text(`Total de profesores: ${profesores.length}`, { align: 'center' });
+    pdf.text(`Fecha de generación: ${new Date().toLocaleString()}`, { align: 'center' });
+    currentY += 40;
 
-  // Asegurarse de que el archivo esté completamente escrito antes de retornar el path
-  return new Promise((resolve, reject) => {
-    writeStream.on('finish', () => resolve(filePath));  // Si se completa la escritura
-    writeStream.on('error', reject);  // Si hay un error
-  });
+    // Configuración de la tabla
+    const tableLeft = 50;
+    const columnWidths = [120, 100, 100, 100, 80]; // Ajustar según necesidad
+    const tableWidth = columnWidths.reduce((a, b) => a + b, 0);
+
+    // Verificar que la tabla no se salga de la página
+    if (tableLeft + tableWidth > pdf.page.width - pdf.page.margins.right) {
+      // Ajustar anchos si es necesario
+      columnWidths[0] -= (tableLeft + tableWidth) - (pdf.page.width - pdf.page.margins.right);
+    }
+
+    // Encabezados de la tabla
+    pdf.rect(tableLeft, currentY, tableWidth, tableRowHeight).fill(primaryColor);
+    
+    let x = tableLeft;
+    pdf.fontSize(12).font('Helvetica-Bold').fillColor('white');
+    pdf.text('Correo', x + 5, currentY + 7, { width: columnWidths[0] - 10 });
+    x += columnWidths[0];
+    pdf.text('Contraseña', x + 5, currentY + 7, { width: columnWidths[1] - 10 });
+    x += columnWidths[1];
+    pdf.text('Nombre', x + 5, currentY + 7, { width: columnWidths[2] - 10 });
+    x += columnWidths[2];
+    pdf.text('Apellido', x + 5, currentY + 7, { width: columnWidths[3] - 10 });
+    x += columnWidths[3];
+    pdf.text('Género', x + 5, currentY + 7, { width: columnWidths[4] - 10, align: 'center' });
+
+    currentY += tableRowHeight;
+
+    // Filas de la tabla
+    pdf.fontSize(10).font('Helvetica').fillColor('black');
+    
+    profesores.forEach((prof, index) => {
+      // Verificar si necesita nueva página
+      checkSpace(tableRowHeight);
+
+      // Alternar colores de fila
+      if (index % 2 === 0) {
+        pdf.rect(tableLeft, currentY, tableWidth, tableRowHeight).fill('#f5f5f5');
+      }
+
+      let x = tableLeft;
+      pdf.text(prof.email || '-', x + 5, currentY + 7, { width: columnWidths[0] - 10 });
+      x += columnWidths[0];
+      pdf.text(prof.generatedPassword || '-', x + 5, currentY + 7, { width: columnWidths[1] - 10 });
+      x += columnWidths[1];
+      pdf.text(prof.name || '-', x + 5, currentY + 7, { width: columnWidths[2] - 10 });
+      x += columnWidths[2];
+      pdf.text(prof.lastName1 || '-', x + 5, currentY + 7, { width: columnWidths[3] - 10 });
+      x += columnWidths[3];
+      
+      const genero = prof.generoId === 1 ? 'MASCULINO' : 'FEMENINO';
+      pdf.text(genero, x + 5, currentY + 7, { width: columnWidths[4] - 10, align: 'center' });
+
+      // Línea divisoria
+      pdf.moveTo(tableLeft, currentY + tableRowHeight)
+        .lineTo(tableLeft + tableWidth, currentY + tableRowHeight)
+        .lineWidth(0.5)
+        .stroke('#dddddd');
+
+      currentY += tableRowHeight;
+    });
+
+    // Terminar el PDF
+    pdf.end();
+
+    // Retornar el path del archivo
+    return new Promise((resolve, reject) => {
+      writeStream.on('finish', () => {
+        // Eliminar imagen temporal
+        fs.unlink(imagePath, (err) => {
+          if (err) console.error('Error al eliminar imagen temporal:', err);
+          resolve(filePath);
+        });
+      });
+      writeStream.on('error', reject);
+    });
+
+  } catch (error) {
+    console.error('Error al generar PDF:', error);
+    throw error;
+  }
 }
+
+export const editarPersonalizacion = async (req, res) => {
+  try {
+    const { temaId, contenido } = req.body;
+    
+    if (!temaId || !contenido) {
+      return res.status(400).json({ error: "Faltan parámetros requeridos" });
+    }
+
+    const pool = await poolPromise;
+    const result = await pool.request()
+      .input("temaId", temaId)
+      .input("contenido", contenido)
+      .query(`
+        UPDATE Tema_Juego_TB 
+        SET Contenido = @contenido
+        WHERE Tema_Juego_ID_PK = @temaId
+      `);
+
+    if (result.rowsAffected[0] === 0) {
+      return res.status(404).json({ error: "Personalización no encontrada" });
+    }
+
+    res.json({ 
+      success: true,
+      message: "Contenido actualizado correctamente"
+    });
+
+  } catch (error) {
+    console.error("Error al editar personalización:", error);
+    res.status(500).json({ error: "Error al editar la personalización" });
+  }
+};
+
+export const desactivarPersonalizacion = async (req, res) => {
+  try {
+    const { temaId } = req.body;
+    
+    if (!temaId) {
+      return res.status(400).json({ error: "ID de tema es requerido" });
+    }
+
+    const pool = await poolPromise;
+    const result = await pool.request()
+      .input("temaId", temaId)
+      .query(`
+        UPDATE Tema_Juego_TB 
+        SET Estado = 0
+        WHERE Tema_Juego_ID_PK = @temaId
+      `);
+
+    if (result.rowsAffected[0] === 0) {
+      return res.status(404).json({ error: "Personalización no encontrada" });
+    }
+
+    res.json({ 
+      success: true,
+      message: "Personalización desactivada correctamente"
+    });
+
+  } catch (error) {
+    console.error("Error al desactivar personalización:", error);
+    res.status(500).json({ error: "Error al desactivar la personalización" });
+  }
+};
+
+export const activarPersonalizacion = async (req, res) => {
+  try {
+    const { temaId } = req.body;
+    const pool = await poolPromise;
+    const result = await pool.request()
+      .input("temaId", temaId)
+      .query(`
+        UPDATE Tema_Juego_TB 
+        SET Estado = 1
+        WHERE Tema_Juego_ID_PK = @temaId
+      `);
+    
+    if (result.rowsAffected[0] === 0) {
+      return res.status(404).json({ error: "Personalización no encontrada" });
+    }
+
+    res.json({ 
+      success: true,
+      message: "Personalización activada correctamente"
+    });
+
+  } catch (error) {
+    console.error("Error al activar:", error);
+    res.status(500).json({ error: "Error al activar la personalización" });
+  }
+};
 
 export { generatePDF };
 

@@ -1,0 +1,129 @@
+:root{
+    --blue-sapphire-clr: #2a40bf;
+    --blue-cobalt-clr: #2b3a8c;
+    --blue-royal-clr: #1935ca;
+    --dark-royal-clr: #0d24a1;
+    --blue-indigo-clr: #140b99;
+    --white-smoke-clr: #fbf9f9;
+    --white-clr: #fffffe;
+    --yellow-clr: #f2cb05;
+    --dark-yellow-clr: #dfba00;
+    --orange-clr: #f2a007;
+    --primary-text-clr: #696F79;
+  }
+  
+*{
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html{
+    font-family: "Poppins", serif;
+    line-height: 1.5rem;
+    color: var(--primary-text-clr);
+    background-color: var(--white-smoke-clr);
+}
+
+.help__body{
+  height: 100vh;
+  background-color: var(--base-clr);
+  color: var(--text-clr);
+
+  display: grid;
+  grid-template-columns: auto 1fr;
+  
+  .help__sidebar{
+    height: 100vh;
+    width: 260px;
+    padding: 0px 10px;
+    background-color: var(--base-clr);
+  
+    position: sticky;
+    top: 0;
+    align-self: start;
+    transition: 300ms ease-in-out;
+    overflow: hidden;
+    text-wrap: nowrap;
+  
+    display: grid;
+    grid-template-rows: 10vh 75vh 5vh;
+  }
+  
+  .help__sidebar i{
+    font-size: 18px;
+    color: var(--blue-royal-clr);
+  }
+  
+  .sidebar__top {
+    display: flex;
+    width: 100%;
+    height: 10vh;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+  }
+  
+  .logo__img{
+    width: 50px;
+  }
+  
+  .logo__text{
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--blue-royal-clr);
+  }
+  
+  .sidebar__list{
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .list__item{
+    border-radius: .5em;
+    padding: 16px;
+  }
+  
+  .item__area{
+    text-decoration: none;
+    color: var(--text-clr);
+    display: flex;
+    align-items: center;
+    gap: 1em;
+  }
+  
+  .top__logo{
+    font-weight: 600;
+  }
+  
+  .list__item--active, .list__item--active i{
+    background-color: var(--blue-royal-clr);
+    color: white;
+  }
+  
+  .sidebar__bottom{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .return__btn{
+    padding: 16px 50px;
+    border: none;
+    border-radius: .5em;
+    cursor: pointer;
+    font-size: 18px;
+  
+    background-color: var(--blue-royal-clr);
+    color: #e6e6ef;
+    font-weight: 500;
+    font-style: normal;
+  }
+  
+  .return__btn i{
+    display: none;
+    color: white;
+  }
+}

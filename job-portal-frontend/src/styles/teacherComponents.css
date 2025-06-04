@@ -1,0 +1,664 @@
+/* Estilos base */
+.professor-dashboard {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f5f7fa;
+}
+
+/* Header (manteniendo estilo original) */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 30px;
+  background-color: var(--white-smoke-clr);
+}
+
+.header__heading {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.heading__title {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--blue-royal-clr);
+}
+
+.heading__text {
+  font-size: 0.9rem;
+}
+
+.header__profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.profile__img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.profile__text {
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+/* Contenido principal */
+.dashboard-content {
+  display: flex;
+  flex: 1;
+  padding: 20px;
+  gap: 20px;
+}
+
+.control-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 400px;
+}
+
+.groups-panel {
+  flex: 2;
+}
+
+/* Estilos para las cajas de contenido */
+.content__box {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.box__title h3 {
+  margin: 0 0 15px 0;
+  color: var(--blue-royal-clr);
+  font-size: 1.1rem;
+}
+
+/* Información de la partida */
+.box__information {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.information__text {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.information__text:last-child {
+  border-bottom: none;
+}
+
+/* Barra de progreso */
+.percentage__bar {
+  height: 10px;
+  background-color: #e0e0e0;
+  border-radius: 5px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.bar__progress {
+  height: 100%;
+  background-color: #4CAF50;
+  transition: width 0.5s ease;
+}
+
+.percentage__text {
+  font-size: 0.9rem;
+  color: #555;
+  text-align: center;
+}
+
+/* Botones */
+.box__options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.option__button button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.option__button button:not(.disabled-button):not(.finish-button) {
+  background-color: var(--blue-royal-clr);
+  color: white;
+}
+
+.option__button button:not(.disabled-button):not(.finish-button):hover {
+  background-color: #2a4b8d;
+}
+
+.finish-button {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.finish-button:hover {
+  background-color: #c0392b;
+}
+
+.disabled-button {
+  background-color: #95a5a6 !important;
+  cursor: not-allowed !important;
+}
+
+/* Lista de grupos */
+.groups-list {
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+}
+
+.group-item {
+  padding: 15px;
+  margin-bottom: 15px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  border-left: 4px solid var(--blue-royal-clr);
+}
+
+.group-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.group-status {
+  background-color: #e3f2fd;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+}
+
+.group-members {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.member {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  padding: 5px 0;
+  border-bottom: 1px dashed #ddd;
+}
+
+.member:last-child {
+  border-bottom: none;
+}
+
+.member-status {
+  font-size: 0.8rem;
+  color: #7f8c8d;
+}
+
+.no-groups {
+  text-align: center;
+  color: #7f8c8d;
+  padding: 20px;
+}
+
+/* Overlay de transición */
+.game-transition-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.game-transition-content {
+  text-align: center;
+  color: white;
+  padding: 30px;
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 10px;
+}
+
+.transition-game-icon {
+  font-size: 3rem;
+  margin-bottom: 15px;
+}
+
+.transition-game-name {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #2ecc71;
+}
+
+/* Responsividad */
+@media (max-width: 768px) {
+  .dashboard-content {
+    flex-direction: column;
+  }
+  
+  .control-panel {
+    max-width: 100%;
+  }
+  
+  .header {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+  
+  .header__profile {
+    justify-content: center;
+  }
+}
+
+/* Estilos del temporizador - iguales a Game.js */
+.timer-container {
+  margin-top: 15px;
+  padding: 10px;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+
+.time-display {
+  font-size: 1.8rem;
+  font-weight: bold;
+  text-align: center;
+  color: #333;
+}
+
+.time-display.low-time {
+  color: #ff5252;
+  animation: pulse 1s infinite;
+}
+
+.time-details {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 5px 0;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.time-progress-bar {
+  height: 6px;
+  background: #e0e0e0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.time-progress-fill {
+  height: 100%;
+  background: #4CAF50;
+  transition: width 1s linear;
+}
+
+.time-progress-fill.low-time {
+  background: #ff5252;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* Agregar en tu archivo CSS */
+.professor-demo-controls {
+  background: #f5f5f5;
+  padding: 15px;
+  border-radius: 8px;
+  margin-top: 20px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.demo-buttons {
+  display: flex;
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.demo-buttons button {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.demo-buttons button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.demo-preview {
+  margin: 15px 0;
+  border: 1px solid #ddd;
+  padding: 10px;
+  border-radius: 4px;
+  background: white;
+}
+
+.demo-preview-img {
+  max-width: 100%;
+  max-height: 200px;
+  display: block;
+  margin: 0 auto;
+}
+
+.download-btn {
+  background: #4CAF50;
+  color: white;
+  padding: 8px 15px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.end-demo-btn {
+  background: #f44336;
+  color: white;
+}
+
+/* Estilos para la vista de demostración */
+.full-demo-view {
+  width: 100%;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 120px);
+}
+
+.demo-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.demo-header h2 {
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.demo-team-counter {
+  font-size: 1.2rem;
+  color: #666;
+  font-weight: bold;
+}
+
+.demo-main-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 20px;
+}
+
+.demo-image-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  position: relative;
+}
+
+.demo-image {
+  max-width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  border: 1px solid #ddd;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.demo-image-info {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background: rgba(0,0,0,0.7);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.no-drawing {
+  text-align: center;
+  color: #666;
+  font-size: 1.2rem;
+}
+
+.no-drawing i {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 10px;
+  color: #ccc;
+}
+
+.demo-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.demo-center-buttons {
+  display: flex;
+  gap: 15px;
+}
+
+.demo-nav-button {
+  padding: 10px 20px;
+  font-size: 1rem;
+  min-width: 120px;
+}
+
+.demo-nav-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.prev-button {
+  background-color: #6c757d;
+  color: white;
+}
+
+.next-button {
+  background-color: #6c757d;
+  color: white;
+}
+
+.end-demo-button {
+  background-color: #dc3545;
+  color: white;
+  padding: 10px 20px;
+}
+
+.download-button {
+  background-color: #28a745;
+  color: white;
+  padding: 10px 20px;
+}
+
+.download-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Estilos para el componente de progreso */
+.team-progress-container {
+  margin-top: 15px;
+  width: 100%;
+}
+
+.team-progress-item {
+  margin-bottom: 15px;
+}
+
+.team-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.team-name {
+  font-weight: 600;
+}
+
+.team-progress-value {
+  color: #4a6baf;
+  font-weight: bold;
+}
+
+.progress-bar {
+  height: 20px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: #4CAF50;
+  transition: width 0.3s ease;
+}
+
+.no-progress-message {
+  text-align: center;
+  padding: 20px;
+  color: #6c757d;
+  font-style: italic;
+}
+
+/* Ajustar el layout existente */
+.control-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 35%;
+}
+
+.groups-panel {
+  width: 30%;
+}
+
+/* Para la vista de demostración */
+.full-demo-view .team-progress-container {
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.team-inactive {
+  color: #6c757d;
+  font-style: italic;
+}
+
+.progress-bar.inactive {
+  background-color: #f8f9fa;
+}
+
+.team-progress-item {
+  transition: all 0.3s ease;
+}
+
+.progress-fill {
+  transition: width 0.5s ease;
+}
+
+.team-progress-value {
+  transition: color 0.3s ease;
+}
+
+.team-progress-value.updated {
+  color: #4CAF50;
+  animation: pulse 0.5s ease;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+/* Estilos para los detalles de progreso */
+.progress-details {
+  width: 100%;
+  margin-top: 5px;
+}
+
+.progress-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.progress-stats span {
+  margin: 0 5px;
+}
+
+/* Animación para actualizaciones */
+@keyframes highlight {
+  0% { background-color: rgba(76, 175, 80, 0.1); }
+  100% { background-color: transparent; }
+}
+
+.team-progress-item.updated {
+  animation: highlight 1s ease;
+}
+
+/* Barra de progreso mejorada */
+.progress-bar {
+  height: 20px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: #4CAF50;
+  transition: width 0.5s ease;
+}
+
+.progress-value {
+  position: absolute;
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: white;
+  font-size: 0.8rem;
+  text-shadow: 0 0 2px rgba(0,0,0,0.5);
+}

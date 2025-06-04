@@ -1,0 +1,534 @@
+:root{
+  --blue-sapphire-clr: #2a40bf;
+  --blue-cobalt-clr: #2b3a8c;
+  --blue-royal-clr: #1935ca;
+  --dark-royal-clr: #0d24a1;
+  --blue-indigo-clr: #140b99;
+  --white-smoke-clr: #fbf9f9;
+  --white-clr: #fffffe;
+  --yellow-clr: #f2cb05;
+  --dark-yellow-clr: #dfba00;
+  --orange-clr: #f2a007;
+  --dark-orange-clr: #ce8806;
+  --primary-text-clr: #696F79;
+}
+  
+*{
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html{
+    font-family: "Poppins", serif;
+    line-height: 1.5rem;
+    color: var(--primary-text-clr);
+    background-color: var(--white-smoke-clr);
+}
+
+/* Layout de los juegos */
+.game__body {
+  height: 100vh;
+  width: 100vw;
+  display: grid;
+  grid-template-rows: auto 1fr;
+
+  .header {
+    display: grid;
+    grid-template-columns: auto auto;
+    background-color: var(--white-smoke-clr);
+    padding: 1vh;
+  }
+  
+  .header__logo {
+    display: flex;
+    align-items: center;
+    padding-left: 1vw;
+    gap: 10px;
+    text-decoration: none;
+    color: inherit; 
+    transition: opacity 0.3s ease;
+  }
+
+  .header__logo:hover {
+    opacity: 0.8;
+  }
+  
+  .image__source {
+    width: 4vw;
+  }
+
+  .logo__text{
+    color: var(--blue-royal-clr);
+    font-size: 1.3vw;
+    font-weight: bold;
+}
+  
+  .logo__link:hover .image__source {
+    transform: scale(1.05); /* Efecto sutil al hacer hover */
+  }
+  
+  .header__title{
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  .title__text{
+      font-size: 1.2vw;
+      font-weight: 700;
+      color: var(--blue-royal-clr);
+      padding-right: 1vw;
+  }
+  
+  .header__profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-self: end; /* Alineación a la derecha */
+  }
+  
+  .profile__img {
+    width: 40px; /* Tamaño fijo en px */
+    height: 40px;
+    border-radius: 50%;
+  }     
+}
+  
+.profile__text_S {
+  align-items: center;
+  justify-content: center;
+  padding: 0.8rem 1.5rem;
+  height: 50px;
+  border-radius: 20px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Estado activo/habilitado */
+.profile__text_S:not(:disabled) {
+    background: linear-gradient(135deg, #3a7bd5, #00d2ff); /* Azul moderno */
+    color: white;
+}
+
+/* Efecto hover para estado activo */
+.profile__text_S:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    background: linear-gradient(135deg, #2c65c4, #00c2ff);
+}
+
+/* Efecto de click */
+.profile__text_S:not(:disabled):active {
+    transform: translateY(1px);
+}
+
+/* Estado deshabilitado */
+.profile__text_S:disabled {
+    background: #f0f0f0; /* Gris claro */
+    color: #a0a0a0; /* Gris medio */
+    cursor: not-allowed;
+}
+
+/* Efecto de "pulso" cuando está esperando */
+.profile__text_S:disabled .fa-hourglass-half {
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+
+@media (max-width: 576px) {
+    .header {
+      grid-template-columns: auto 1fr auto;
+      padding: 0 10px;
+    }
+    
+    .logo__text,
+    .profile__text {
+      display: none; /* Ocultar texto en móviles pequeños */
+    }
+    
+    .container__information {
+      grid-template-columns: 1fr;
+    }
+    
+    .information__title,
+    .information__button {
+      grid-column: span 1;
+    }
+}
+
+.main{
+  padding: 0px 1vmax 1vmax 1vmax;
+}
+
+/* Estilos del layout en sala de espera */
+.body__room{
+  height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  
+  .header {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    background-color: var(--white-smoke-clr);
+    padding: 1vh;
+  }
+
+  .logo__link {
+    display: flex;
+    align-items: center;
+    padding-left: 1vh;
+    gap: 10px;
+    text-decoration: none;
+    color: inherit; 
+    transition: opacity 0.3s ease;
+  }
+  
+  .logo__link:hover {
+    opacity: 0.8;
+  }    
+
+  .image__source{
+      width: 4vw;
+  }
+
+  .logo__text{
+      color: var(--blue-royal-clr);
+      font-size: 1.3vw;
+      font-weight: bold;
+  }
+
+  .header__title{
+      display: flex;
+      align-items: center;
+      justify-content: center;
+  }
+
+  .title__text{
+      font-size: 1.6vw;
+      font-weight: 700;
+      color: var(--blue-royal-clr);
+  }
+
+  .header__profile{
+      display: flex;
+      align-items: center;
+      padding-right: 1vh;
+  }
+
+  .main {
+    padding: 0vh 1vh 1vh 1vh;
+    height: 100%;
+    width: 100%; /* Asegurar que ocupe todo el ancho */
+  }
+}
+
+/* Layout de la pantalla describir el dibujo */
+.describe__body{
+    min-height: 100vh;
+    display: grid;
+    grid-template: 
+    "header" 10vh
+    "main" 1fr/
+    1fr;  
+
+    .header {
+        grid-area: header;
+        top: 0;
+        position: sticky;
+        min-width: 100%;
+
+        display: grid;
+        grid-template-columns: auto auto auto;
+        background-color: var(--white-smoke-clr);
+        align-items: center;
+    }
+
+    .header__logo {
+        display: grid;
+        grid-template-columns: auto auto;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 5px;
+        padding-left: 40px;
+    }
+
+    .image__source{
+        width: 3.5vw;
+    }
+
+    .logo__text{
+        color: var(--blue-royal-clr);
+        font-size: 0.8vw;
+        font-weight: 600;
+    }
+
+    .header__title{
+        display: flex;
+        justify-content: center;
+        padding-right: 2.5vw;
+    }
+
+    .title__text{
+        font-size: 1.5vw;
+        font-weight: 700;
+        color: var(--blue-royal-clr);
+    }
+
+    .header__profile{
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 10px;
+        padding-right: 40px;
+    }
+
+    .profile__img{    
+        width: 3.5vw;
+    }
+
+    .profile__text{
+        font-size: 1vw;
+        font-weight: 500;
+    }
+
+    .main{
+        grid-area: main;
+        padding: 0px 15px 15px 15px;
+    }
+}
+
+/* Estilos para las tarjetas de estudiantes */
+
+
+.student-card {
+  display: flex;
+  align-items: center;
+  background: white;
+  border-radius: 8px;
+  padding: 12px 16px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+.student-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.student-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4a6cf7, #6a11cb);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  margin-right: 12px;
+}
+
+.student-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.student-name {
+  font-weight: 500;
+  font-size: 1rem;
+}
+
+.student-status {
+  font-size: 0.8rem;
+  color: #666;
+  display: flex;
+  align-items: center;
+  margin-top: 2px;
+}
+
+.status-indicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4CAF50;
+  margin-right: 6px;
+}
+
+.new-student {
+  animation: pop-in 0.5s ease;
+}
+
+@keyframes pop-in {
+  0% { transform: scale(0.95); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Animación temporizador */
+
+.custom-timer-container {
+  position: relative;
+  width: 200px;
+  height: 300px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* Contenedor de partículas - posición absoluta sobre el círculo */
+/* Estilos para las partículas */
+.timer-particle {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.8;
+  animation: particle-explode 1s forwards;
+  transform: translate(-50%, -50%);
+}
+
+/* Partículas que salen del centro */
+.timer-particle:not(.random-origin) {
+  top: 50%;
+  left: 50%;
+  --random-x: 0;
+  --random-y: 0;
+}
+
+/* Partículas que salen de puntos aleatorios */
+.timer-particle.random-origin {
+  top: calc(var(--random-origin-y, 0.5) * 100%);
+  left: calc(var(--random-origin-x, 0.5) * 100%);
+}
+
+/* Animación de las partículas */
+@keyframes particle-explode {
+  0% {
+    transform: translate(0, 0) scale(0.3);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: 
+      translate(
+        calc(var(--random-x, 0) * 100px), 
+        calc(var(--random-y, 0) * 100px)
+      ) 
+      scale(1);
+    opacity: 0;
+  }
+}
+
+.custom-timer-popup {
+  background: white;
+  border-radius: 16px;
+  border: none;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  color: #333;
+  font-family: 'Arial', sans-serif;
+  overflow: visible;
+}
+
+.custom-timer-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px;
+  position: relative;
+}
+
+.timer-text {
+  font-size: 1.3rem;
+  margin-bottom: 25px;
+  color: #4a5568;
+  text-align: center;
+  font-weight: 600;
+}
+
+.timer-circle {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  margin-bottom: 20px;
+}
+
+.timer-count {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 3rem;
+  font-weight: bold;
+  color: #2d3748;
+  transition: all 0.3s ease;
+}
+
+.timer-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+  filter: drop-shadow(0 2px 5px rgba(0,0,0,0.1));
+}
+
+.timer-circle-bg {
+  fill: none;
+  stroke: #edf2f7;
+  stroke-width: 8;
+}
+
+.timer-circle-fill {
+  fill: none;
+  stroke: #4299e1;
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.5s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+/* Animaciones mejoradas */
+@keyframes countdownPop {
+  0% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -50%) scale(1.2); }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes particleExplode {
+  0% { 
+    opacity: 0;
+    transform: translate(0, 0) scale(0);
+  }
+  20% { opacity: 1; }
+  100% { 
+    opacity: 0;
+    transform: translate(
+      calc(var(--random-x) * 50px), 
+      calc(var(--random-y) * 50px)
+    ) scale(1);
+  }
+}
+
+/* Partículas */
+.timer-particle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: #4299e1;
+  border-radius: 50%;
+  opacity: 0;
+  animation: particleExplode 0.8s ease-out;
+}
+
+/* Efecto al cambiar número */
+.timer-count.changing {
+  animation: countdownPop 0.4s ease-out;
+}
+
