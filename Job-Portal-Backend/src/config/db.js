@@ -1,17 +1,20 @@
 import sql from 'mssql';
+import dotenv from 'dotenv';
+dotenv.config();
+
+// Configuración de la conexión a la base de datos
 
 const config = {
-  user: 'FideColab',  
-  password: 'FideColab',  
-  server: 'DESKTOP-HKLF3LI\\SQLEXPRESS',  // Nombre del servidor de SQL Server
-  database: 'FideColab',  // Nombre de la base de datos 
+  user: process.env.DB_USER,
+  password: process.env.DB_PASS,
+  server: process.env.DB_SERVER,
+  database: process.env.DB_NAME,
   options: {
-    encrypt: true,  
-    trustServerCertificate: true,  
+    encrypt: true,
+    trustServerCertificate: false,
   },
 };
 
-// Crear el pool de conexiones
 const poolPromise = new sql.ConnectionPool(config)
   .connect()
   .then(pool => {

@@ -1,0 +1,318 @@
+._est_overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  max-width: 100vw;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(24px);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+  overflow-x: hidden; /* eliminación natural de scroll horizontal */
+}
+
+._est_overlay._est_active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Animación cuando cambia el juego */
+.game-display._blurring {
+  animation: gameFadeOverlay 0.8s ease-in-out;
+}
+
+@keyframes gameFadeOverlay {
+  0% {
+    filter: brightness(0.9) saturate(1.2);
+    background-color: rgba(0, 80, 255, 0.1);
+  }
+  100% {
+    filter: none;
+    background-color: transparent;
+  }
+}
+
+/* Texto “Siguiente Juego” */
+._est_next-game {
+  position: relative;
+  text-align: center;
+  animation:
+    _est_fadeInUp 0.8s ease-out forwards,
+    _est_holdVisible 2s 0.8s forwards,
+    _est_fadeOutSmooth 0.8s 2.8s forwards;
+}
+
+._est_next-text {
+  font-size: 2.3rem;
+  color: white;
+  margin-bottom: 2rem; /* Más separación */
+  text-shadow: 0 2px 10px rgba(255, 255, 255, 0.3);
+}
+
+._est_game-name {
+  font-size: 4rem;
+  font-weight: bold;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  text-shadow: 0 2px 15px rgba(255, 255, 255, 0.5);
+}
+
+._est_game-icon {
+  font-size: 3.5rem;
+}
+
+/* Línea horizontal debajo */
+._est_line-horizontal {
+  position: absolute;
+  top: calc(50% + 110px);
+  left: 50%;
+  height: 4px;
+  width: 0;
+  background: linear-gradient(to right, transparent, white, transparent);
+  transform: translate(-50%, -50%);
+  animation: _est_lineExpand 1s ease-out forwards;
+}
+
+@keyframes _est_lineExpand {
+  to { width: 80vw; }
+}
+
+/* Instrucciones */
+._est_instructions {
+  opacity: 0;
+  text-align: center;
+  animation: _est_fadeIn 0.5s forwards;
+  animation-delay: 3.6s; /* Menor delay ahora */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+._est_instruction-title {
+  font-size: 3rem;
+  color: white;
+  margin-bottom: 2.5rem;
+  text-shadow: 0 2px 8px rgba(255, 255, 255, 0.3);
+}
+
+._est_instruction-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 3rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+._est_instruction-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 1.8rem;
+  color: white;
+  max-width: 240px;
+  opacity: 0;
+  transform: translateY(20px);
+  text-align: center;
+}
+
+._est_instruction-item:nth-child(1) { animation: _est_itemIn 0.6s 4.0s forwards; }
+._est_instruction-item:nth-child(2) { animation: _est_itemIn 0.6s 4.3s forwards; }
+._est_instruction-item:nth-child(3) { animation: _est_itemIn 0.6s 4.6s forwards; }
+
+._est_icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.8rem;
+  color: white;
+}
+
+/* Botón */
+._est_start-btn {
+  margin-top: 3rem;
+  padding: 1.1rem 3.5rem;
+  font-size: 1.6rem;
+  background: linear-gradient(135deg, #007bff, #339af0);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(20px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  animation: _est_btnIn 0.6s 5.2s forwards;
+}
+
+/* Animaciones */
+@keyframes _est_fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes _est_fadeOutSmooth {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-20px); }
+}
+
+@keyframes _est_holdVisible {
+  from, to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes _est_fadeIn {
+  to { opacity: 1; }
+}
+
+@keyframes _est_itemIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes _est_btnIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+._est_blackout {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgb(112, 112, 112);
+  opacity: 0;
+  z-index: 9999;
+  pointer-events: none;
+  transition: opacity 0.3s ease-in-out;
+}
+
+._est_blackout.active {
+  opacity: 1;
+}
+
+/* Pantalla de Partida Finalizada - Sin Blur */
+.finish-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.92); /* Fondo más oscuro */
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.8s ease-out;
+  pointer-events: auto;
+}
+
+.finish-overlay.active {
+  opacity: 1;
+}
+
+.finish-content {
+  text-align: center;
+  width: 90%;
+  max-width: 800px;
+  padding: 2rem;
+  animation: 
+    finishFadeIn 1s ease-out forwards,
+    finishPulse 3s 1s infinite alternate;
+}
+
+.finish-title {
+  font-size: 4.5rem;
+  margin-bottom: 2rem;
+  position: relative;
+  color: white; /* Color base sólido */
+  animation: titleEntrance 1.2s cubic-bezier(0.2, 0.8, 0.4, 1) forwards;
+}
+
+/* Gradiente con pseudo-elemento para evitar blur */
+.finish-title::after {
+  content: 'Partida Finalizada';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to right, #ffffff, #64b5f6, #1976d2);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  z-index: 2;
+}
+
+/* Sombra suave solo en el contorno */
+.finish-title::before {
+  content: 'Partida Finalizada';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  text-shadow: 0 0 10px rgba(100, 181, 246, 0.5);
+  z-index: 1;
+  color: transparent;
+}
+
+.finish-line {
+  height: 4px;
+  width: 0;
+  background: linear-gradient(to right, transparent, #ffffff, #64b5f6, transparent);
+  margin: 2rem auto;
+  animation: lineExpand 1.2s 0.5s cubic-bezier(0.2, 0.8, 0.4, 1) forwards;
+}
+
+.finish-countdown {
+  font-size: 2.5rem;
+  color: white;
+  margin-top: 3rem;
+  opacity: 0;
+  animation: fadeInUp 0.8s 1.5s ease-out forwards;
+}
+
+.finish-count {
+  font-size: 3rem;
+  font-weight: bold;
+  color: #64b5f6;
+  display: inline-block;
+  min-width: 2.5rem;
+  text-shadow: 0 0 20px rgba(100, 181, 246, 0.7);
+}
+
+/* Animaciones (se mantienen igual) */
+@keyframes finishFadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes titleEntrance {
+  0% { opacity: 0; transform: translateY(-30px) scale(0.9); }
+  60% { opacity: 1; }
+  100% { transform: translateY(0) scale(1); }
+}
+
+@keyframes lineExpand {
+  from { width: 0; opacity: 0; }
+  to { width: 80%; opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes finishPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}

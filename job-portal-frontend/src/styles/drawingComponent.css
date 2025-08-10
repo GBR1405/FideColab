@@ -1,0 +1,368 @@
+:root{
+  --blue-sapphire-clr: #2a40bf;
+  --blue-cobalt-clr: #2b3a8c;
+  --blue-royal-clr: #1935ca;
+  --dark-royal-clr: #0d24a1;
+  --blue-indigo-clr: #140b99;
+  --white-smoke-clr: #fbf9f9;
+  --white-clr: #fffffe;
+  --yellow-clr: #f2cb05;
+  --dark-yellow-clr: #dfba00;
+  --orange-clr: #f2a007;
+  --dark-orange-clr: #ce8806;
+  --primary-text-clr: #696F79;
+} 
+
+/* Contenedor de dibujo */
+.drawing__container {
+    position: relative;
+    background-color: var(--white-smoke-clr);
+    box-shadow: inset 0px 0px 10px rgba(0, 0, 0, 0.05);
+    border-radius: 1em;
+    height: 100%;
+    width: 100%;
+
+    .container__canvas{
+        position: absolute;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0px 2px 5px 2px rgba(0, 0, 0, 0.06);
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    .canvas__drawing{
+        position: relative;
+        background-color: transparent;
+        border: none;
+        flex-shrink: 0;
+    }
+
+    .container__details{
+        height: 100%;
+        width: 100%;
+        display: flex;
+        justify-content: flex-end;
+        gap: 15px;
+    }
+
+    .details__space{
+      display: flex;
+      flex-direction: column;
+      width: 55%;  
+      gap: 15px;
+    }
+
+    .details__group {
+        position: absolute;
+        left: 0;
+        top: 0;
+        margin: 15px;
+        height: 4.5vmax;
+        width: 13vmax;
+        border-radius: 1em;
+        background-color: white;
+        box-shadow: 0px 2px 5px 2px rgba(0, 0, 0, 0.06);
+
+        display: grid;
+        grid-template-columns: 1fr 25%;
+        align-items: center;
+        justify-items: center;
+
+        font-size: 0.9vmax;
+        color: var(--blue-royal-clr);
+        font-weight: bold;
+
+        span{
+            width: 100%;
+            height: 100%;
+            border-left: rgba(0, 0, 0, 0.03) 1px solid;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    }
+
+    .container__theme{
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+
+      margin: 15px;
+      height: 12vmax;
+      width: 13vmax;
+        background-color: white;
+        display: grid;
+        grid-template-rows: 2vmax 1fr;
+        border-radius: 1em;
+        box-shadow: 0px 2px 5px 2px rgba(0, 0, 0, 0.06);
+    }
+
+    .container__header{
+        border-bottom: rgba(0, 0, 0, 0.03) 1px solid;
+        border-radius: 1em 1em 0em 0em;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        h3{
+            color: var(--blue-royal-clr);
+            font-size: 0.9vmax;
+        }
+    }
+
+    .container__body{
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        span{
+            font-size: 0.9vmax;
+            font-weight: 500;
+            text-align: center;
+            line-height: normal;
+        }
+    }   
+
+    /* Panel de herramientas extendido */
+    .drawing__tools {
+      position: absolute;
+      right: 0;
+      top: 0;
+      margin: 15px;
+
+      display: grid;
+      grid-template-rows: 45% 40% 10%;  
+      gap: 0.8vmax;
+      justify-items: center;
+      align-items: center;
+      padding: 0.5vw;
+      background: white;
+      height: 85%;
+      width: 5vmax;
+      border-radius: 1em;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .color-palette-wide {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5vw;
+    }
+
+    .color-rows-container {
+      display: flex;
+    }
+
+    .color-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-content: center;
+      justify-content: center;
+      gap: 0.4vw;
+      width: 3vw;
+    }
+
+    .color-chip {
+      all: unset;
+      width: 1vw;
+      height: 1vw;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+
+    .color-chip:hover {
+      transform: scale(1);
+    }
+
+    .color-chip.active {
+      transform: scale(1);
+      box-shadow: 0 0 0 3px var(--transparent-royal-clr);
+    }
+
+    .custom-color-picker-large {
+      all: unset;
+      width: 3vmax;
+      height: 3vmax;
+      border-radius: 1em;
+      cursor: pointer;
+    }
+
+    .tool-row {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5vw;
+    }
+
+    .tool-btn {
+      width: 2.5vmax;
+      height: 4vmax;
+      border-radius: 0.6vw;
+      border: none;
+      background: white;
+      color: #555;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: all 0.2s;
+      font-size: 0.8vw;
+    }
+
+    .tool-btn:hover {
+      background: #f0f0f0;
+      transform: translateY(-2px);
+    }
+
+    .tool-btn.active {
+      background: var(--blue-royal-clr);
+      color: white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    
+    .size__controls {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;     
+
+      span{
+        font-size: 0.8vmax;
+        font-weight: 600;
+      }
+    }
+
+    .size__slider {
+      width: 3vmax;
+      height: 1vmax;
+      /* Opcional: quita el estilo por defecto */
+      -webkit-appearance: none;
+      appearance: none;
+      background: #eee;
+      border-radius: 1vmax;
+      outline: none;
+    }
+
+    ::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 1.4vmax;
+      height: 1.4vmax;
+      border-radius: 50%;
+      background: var(--blue-royal-clr);
+      border: 1px solid #fff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .custom-color-container {
+      height: 100%;
+      display: flex;
+      align-items: center;
+    }
+
+    .tools__section{
+        height: 100%;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.8vmax;
+    }
+    
+    /* Contenedor del juego - Tanque */
+    .ink__tank {
+      position: relative;
+      width: 60%;
+      height: 100%;
+      background-color: #f0f0f0;
+      border-radius: 0.5vmax;
+      overflow: hidden;
+      margin: 0 10px;
+      border: 1px solid #ccc;
+    }
+    
+    .tank__fill {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      background-color: #4a90e2;
+      transition: height 0.3s ease;
+    }
+
+    .tank__critical {
+      background-color: #ff4d4d;
+    }
+    
+    .tank__low {
+      background-color: #ffcc00;
+    }       
+}
+
+@media (max-height: 725px), (max-width: 1800px){
+    .container__canvas{
+        width: 640px;
+        height: 480px;
+        overflow: hidden;
+    }
+    .canvas__drawing{
+        transform: scale(0.8);
+    }  
+}
+
+@media (max-height: 610px), (max-width: 1500px){
+    .container__canvas{
+        width: 480px;
+        height: 360px;
+        overflow: hidden;
+    }
+    .canvas__drawing{
+        transform: scale(0.6);
+    }  
+}
+
+@media (max-width: 1200px){
+    .container__canvas{
+        width: 400px;
+        height: 300px;
+        overflow: hidden;
+    }
+    .canvas__drawing{
+        transform: scale(0.5);
+    }  
+}
+
+@media (max-width: 1040px){
+    .container__canvas{
+        width: 320px;
+        height: 240px;
+        overflow: hidden;
+    }
+    .canvas__drawing{
+        transform: scale(0.4);
+    }  
+}
+
+@media (max-width: 890px){
+    .container__canvas{
+        width: 240px;
+        height: 180px;
+        overflow: hidden;
+    }
+    .canvas__drawing{
+        transform: scale(0.3);
+    }  
+}

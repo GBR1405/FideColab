@@ -1,64 +1,135 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import Layout from "../components/Layout";
 import Cookies from "js-cookie";
-
-
-const apiUrl = process.env.REACT_APP_API_URL;
+import "../styles/HomeScreen.css";
+import useDebugMode from './debug';
 
 function UserHomeScreen() {
-  const [userData, setUserData] = useState(null);
-  const [error, setError] = useState(""); 
+  const [error, setError] = useState("");
+  const [currentStep, setCurrentStep] = useState(0);
+
+   useDebugMode();
 
   useEffect(() => {
-    fetchUserDetails();
+    const token = Cookies.get("IFUser_Info");
+    if (!token) setError("User is not logged in");
+
+    // Carrusel automático
+    const interval = setInterval(() => {
+      setCurrentStep((prev) => (prev === 2 ? 0 : prev + 1));
+    }, 4000);
+
+    return () => clearInterval(interval);
   }, []);
 
-  const fetchUserDetails = async () => {
-    try {
-      const token = Cookies.get('authToken');
-
-      if (!token) {
-        setError("User is not logged in");
-        return;
-      }
-
-      const response = await axios.get(`${apiUrl}/auth/get-userDetails`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (response.data.success) {
-        setUserData(response.data.user);
-        let userInfo = { isLoggedIn: true, userData: response.data.user };
-        document.cookie = `userData=${JSON.stringify(userInfo)}; path=/; max-age=86400`;
-      } else {
-        setError(response.data.message || "Failed to fetch user details");
-      }
-    } catch (err) {
-      console.error("Error fetching user details:", err);
-      setError(err.response?.data?.message || "An error occurred");
-    }
-  };
-
-  // Aquí, renderizamos solo cuando los datos estén disponibles.
-  if (error) {
-    return (
-      <Layout userData={null}>
-      </Layout>
-    );
-  }
-
-  if (!userData) {
-    return (
-      <div>Loading...</div> // Puedes mostrar un indicador de carga aquí mientras se obtiene la información
-    );
-  }
+  if (error) return <Layout userData={null} />;
 
   return (
-    <Layout userData={userData}>
-      <section className="main__container">
-        
-      </section>
+    <Layout>
+      <div className="main__container_HS" style={{ overflowY: "hidden" }}>
+
+        {/* Sección de bienvenida */}
+        <div className="welcome-section">
+          <div className="welcome-card">
+            <h1 className="padding">¡Bienvenido a</h1>
+            <div className="app-name">
+              <span className="fide">FIDE</span>
+              <span className="colab">COLAB</span>
+            </div>
+            <p className="tagline">Tu plataforma de aprendizaje colaborativo</p>
+            <div className="mission">
+              <p>FideColab fue creado para transformar la educación a través de la gamificación y el trabajo en equipo.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Contenido principal */}
+        <div className="main-content">
+          {/* Carrusel de pasos */}
+          <div className="steps-section">
+            <div className="steps-carousel">
+              <h2 className="carousel-title">¿Cómo empezar a explorar y disfrutar?</h2>
+              <div className="carousel-inner">
+                <div className={`step ${currentStep === 0 ? 'active' : ''}`}>
+                  <div className="step-content">
+                    <span className="step-number">1</span>
+                    <div className="step-text-container">
+                      <p className="step-text">Espera a ser invitado a una sala</p>
+                      <div className="step-decoration">
+                        <div className="decoration-circle"></div>
+                        <div className="decoration-line"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className={`step ${currentStep === 1 ? 'active' : ''}`}>
+                  <div className="step-content">
+                    <span className="step-number">2</span>
+                    <div className="step-text-container">
+                      <p className="step-text">Entra y convive con tus compañeros</p>
+                      <div className="step-decoration">
+                        <div className="decoration-circle"></div>
+                        <div className="decoration-line"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className={`step ${currentStep === 2 ? 'active' : ''}`}>
+                  <div className="step-content">
+                    <span className="step-number">3</span>
+                    <div className="step-text-container">
+                      <p className="step-text">Completa actividades y mejora en tus habilidades</p>
+                      <div className="step-decoration">
+                        <div className="decoration-circle"></div>
+                        <div className="decoration-line"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="carousel-dots">
+                {[0, 1, 2].map((i) => (
+                  <button
+                    key={i}
+                    className={`dot ${currentStep === i ? 'active' : ''}`}
+                    onClick={() => setCurrentStep(i)}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Panel de notificaciones */}
+          <div className="notifications-section">
+            <div className="notifications-panel">
+              <h2>Últimas noticias</h2>
+              <div className="notifications-content">
+                <div className="notification">
+                  <div className="notification-icon">📢</div>
+                  <div className="notification-text">
+                    <h3>Gran apetura</h3>
+                    <p>Se de los primeros en utilizar este gran sistema</p>
+                  </div>
+                </div>
+                <div className="notification">
+                  <div className="notification-icon">🚧</div>
+                  <div className="notification-text">
+                    <h3>En desarrollo</h3>
+                    <p>Cualquier error por favor comunicarlo lo antes posible</p>
+                  </div>
+                </div>
+                <div className="notification">
+                  <div className="notification-icon">🎓</div>
+                  <div className="notification-text">
+                    <h3>Sistema hecho por y para estudiantes</h3>
+                    <p>Trabaja en equipo y mejora en tus habilidades</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>        
+      </div>
     </Layout>
   );
 }

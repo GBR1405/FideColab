@@ -6,7 +6,7 @@ function ErrorWindowSize() {
 
     useEffect(() => {
         const checkScreenSize = () => {
-            setIsSmallScreen(window.innerWidth < 768);
+            setIsSmallScreen(window.innerWidth < 810 || window.innerHeight < 550);
         };
         
         checkScreenSize();
@@ -26,7 +26,7 @@ function ErrorWindowSize() {
                 <h2 className="error-warning">Lo sentimos</h2>
                 <p className="error-message">
                     El tamaño de la pantalla es muy pequeño para el uso del sistema. <br />
-                    Por favor, opta por ampliar la pantalla o usa un dispositivo de sobremesa o laptop.
+                    Por favor, opta por ampliar la pantalla o usar un dispositivo más grande.
                 </p>
             </div>
         </div>

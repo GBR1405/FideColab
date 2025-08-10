@@ -1,0 +1,201 @@
+/* Contenedor principal */
+.live-view-container {
+  width: 100%;
+  height: 100vh;
+  max-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--white-smoke-clr);
+  box-shadow: inset 0px 0px 10px rgba(0, 0, 0, 0.05);
+  border-radius: 1em;
+  overflow: hidden;
+  padding: 15px;
+  box-sizing: border-box;
+}
+
+/* Encabezado */
+.live-view-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 15px;
+  height: 40px;
+}
+
+.live-view-title {
+  color: var(--blue-royal-clr);
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+  text-align: center;
+}
+
+/* Contenido principal */
+.live-view-content {
+  display: flex;
+  flex: 1;
+  gap: 15px;
+  min-height: 0;
+}
+
+/* Columna de equipos - más ancha */
+.teams-column {
+  width: 280px; /* Aumentado de 220px a 280px */
+  display: flex;
+  flex-direction: column;
+  background-color: var(--white-clr);
+  border-radius: 1em;
+  box-shadow: 0px 0px 15px 5px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.teams-header {
+  padding: 12px 15px;
+  background: linear-gradient(135deg, var(--blue-royal-clr), #3a7bd5);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.teams-header h4 {
+  color: var(--white-clr);
+  font-size: 1.1rem; /* Tamaño aumentado */
+  margin: 0;
+  font-weight: 500;
+}
+
+.teams-count {
+  color: var(--white-clr);
+  font-size: 0.9rem; /* Tamaño aumentado */
+  opacity: 0.8;
+}
+
+.teams-list-container {
+  flex: 1;
+  padding: 12px;
+  overflow: hidden;
+}
+
+/* Lista de equipos con scroll controlado */
+.teams-list-scroll {
+  height: 100%;
+  overflow-y: auto;
+  padding-right: 5px;
+  max-height: calc(100vh - 180px);
+  display: grid;
+  grid-template-rows: repeat(auto-fill, 50px); /* Altura fija para cada equipo */
+  gap: 8px;
+}
+
+/* Botones de equipo más grandes */
+.team-button {
+  width: 100%;
+  height: 50px; /* Altura fija aumentada */
+  padding: 0 15px; /* Padding horizontal aumentado */
+  border: none;
+  border-radius: 8px;
+  background-color: var(--white-smoke-clr);
+  color: var(--primary-text-clr);
+  font-size: 1rem; /* Tamaño de fuente aumentado */
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.team-button:hover {
+  background-color: #e0e0e0;
+}
+
+.team-button.active {
+  background: linear-gradient(135deg, var(--blue-royal-clr), #3a7bd5);
+  color: var(--white-clr);
+}
+
+.team-button-text {
+  flex-grow: 1;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.team-button-indicator {
+  margin-left: 8px;
+  color: var(--white-clr);
+  font-size: 0.7rem;
+}
+
+/* Columna del canvas ajustada */
+.canvas-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--white-clr);
+  border-radius: 1em;
+  box-shadow: 0px 0px 15px 5px rgba(0, 0, 0, 0.05);
+  padding: 15px;
+  overflow: hidden;
+}
+
+.canvas-wrapper {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f5f5f5;
+  border-radius: 0.8em;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.live-view-canvas {
+  background-color: var(--white-clr);
+  border: 1px solid #ddd;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* Scrollbar */
+.teams-list-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.teams-list-scroll::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+}
+
+.teams-list-scroll::-webkit-scrollbar-thumb {
+  background: var(--blue-royal-clr);
+  border-radius: 4px;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .live-view-content {
+    flex-direction: column;
+  }
+  
+  .teams-column {
+    width: 100%;
+    height: auto;
+    max-height: 200px;
+  }
+  
+  .teams-list-scroll {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    grid-template-rows: none;
+  }
+  
+  .team-button {
+    width: calc(50% - 4px);
+    height: 45px;
+  }
+}

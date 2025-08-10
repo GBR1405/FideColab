@@ -198,3 +198,50 @@ html {
     color: var(--blue-royal-clr);
     font-size: 14px;
 }
+
+.loader_login {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 3px solid;
+  border-color: #fff #0000; /* blanco y transparente */
+  animation: spin 0.6s linear infinite;
+  margin: auto;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.input__wrapper-login {
+  position: relative;
+}
+
+.input__shape-login {
+  width: 100%;
+  padding-right: 40px; 
+  box-sizing: border-box;
+}
+
+.eye-icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #666;
+  font-size: 1rem;
+}
+
+/* Efecto de desenfoque */
+.blurred {
+  filter: blur(4px);
+  opacity: 0.7;
+  transition: all 0.5s ease;
+}
+
+.article__text-login, .article__author-login {
+  transition: all 0.5s ease;
+}

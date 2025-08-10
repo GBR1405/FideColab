@@ -6,7 +6,7 @@ import pdfFile from '../docs/Manual de Uso.pdf';
 const Manual = () => {
   return (
     <LayoutHelp>
-      <section className="help__container">
+      <section className="manual__container">
         <div className="container__navegation">
           <a className="navegation__text" href="/help">Centro de Ayuda</a>
           <a className="navegation__text navegation__text--active" href="/help/manual">/Manual</a>

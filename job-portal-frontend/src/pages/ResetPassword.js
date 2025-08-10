@@ -37,8 +37,6 @@ export default function ResetPassword() {
     }
 
     try {
-      console.info(token);
-      console.info(newPassword);
       await axios.post(`${apiUrl}/auth/reset-password`, { token, newPassword });
       toast.success("Contraseña cambiada con éxito");
       navigate("/login");

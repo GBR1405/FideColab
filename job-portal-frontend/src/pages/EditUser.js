@@ -1,272 +1,243 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import React, { useEffect, useState } from "react";
+import Swal from "sweetalert2";
 import Cookies from "js-cookie";
-import Swal from "sweetalert2"; // Importa SweetAlert2
+import CryptoJS from "crypto-js";
 
-function EditUser({ showModal, setShowModal }) {
-  const [userData, setUserData] = useState({
-    name: "",
-    gender: "Indefinido", // Valor por defecto
-  });
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+const apiUrl = process.env.REACT_APP_API_URL;
+const secretKey = process.env.REACT_APP_SECRET_KEY;
+
+const EditarPerfil = ({ setShowModal }) => {
+  const [correo, setCorreo] = useState("");
+  const [genero, setGenero] = useState("Indefinido");
+  const [originalGenero, setOriginalGenero] = useState("Indefinido");
 
   useEffect(() => {
-    if (showModal) {
-      // Al abrir el modal, cargamos la información del usuario
-      fetchUserData();
-    }
-  }, [showModal]);
+    const encrypted = Cookies.get("IFUser_Info");
+    if (!encrypted) return;
 
-  const fetchUserData = async () => {
-    const token = Cookies.get("authToken");
-    if (!token) {
-      setError("Debes iniciar sesión para editar tu perfil.");
-      return;
+    const bytes = CryptoJS.AES.decrypt(encrypted, secretKey);
+    const decrypted = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+    setCorreo(decrypted.correo);
+    setGenero(decrypted.genero || "Indefinido");
+    setOriginalGenero(decrypted.genero || "Indefinido");
+
+    mostrarModal();
+  }, []);
+
+  const actualizarTodo = async () => {
+    const generoNuevo = document.getElementById("generoSelect").value;
+    const actual = document.getElementById("passActual").value;
+    const nueva = document.getElementById("passNueva").value;
+    const confirmada = document.getElementById("passConfirm").value;
+
+    // VALIDACIONES
+    if (generoNuevo !== originalGenero) {
+      await actualizarGenero(generoNuevo);
     }
 
-    try {
-      const response = await axios.get(
-        "http://localhost:3000/api/auth/user-profile",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (response.data.success) {
-        setUserData({
-          name: response.data.user.name,
-          gender: response.data.user.gender || "Indefinido", // Si no hay género, se asigna "Indefinido"
-        });
-      } else {
-        setError(response.data.message || "No se pudo obtener la información del usuario.");
+    if (actual || nueva || confirmada) {
+      if (!actual || !nueva || !confirmada) {
+        return Swal.fire("Campos incompletos", "Debes llenar todas las contraseñas", "warning");
       }
-    } catch (err) {
-      setError(err.response?.data?.message || "Ocurrió un error al cargar la información.");
+      if (nueva !== confirmada) {
+        return Swal.fire("Error", "La nueva contraseña no coincide con la confirmación", "error");
+      }
+      await cambiarContraseña(actual, nueva);
     }
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setUserData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-
-    const token = Cookies.get("authToken");
-    if (!token) {
-      setError("No token provided. Please log in again.");
-      setLoading(false);
-      return;
-    }
-
+  const actualizarGenero = async (nuevoGenero) => {
     try {
-      const response = await axios.post(
-        "http://localhost:3000/api/auth/user-edit",
-        {
-          nombre: userData.name,
-          generoId: userData.gender === "Hombre" ? 1 : userData.gender === "Mujer" ? 2 : 3, // Convertir el género a un ID numérico
+      const token = Cookies.get("authToken");
+      const res = await fetch(`${apiUrl}/auth/user-edit`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+        body: JSON.stringify({
+          correo,
+          generoId: nuevoGenero === "Hombre" ? 1 : nuevoGenero === "Mujer" ? 2 : 3,
+        }),
+      });
 
-      if (response.data.success) {
-        // Muestra un SweetAlert de éxito
-        Swal.fire({
-          title: "¡Éxito!",
-          text: "Información actualizada exitosamente",
-          icon: "success",
-          confirmButtonText: "Aceptar",
-        }).then(() => {
-          setShowModal(false);
-          window.location.reload(); // Recarga la página para ver los cambios
+      const data = await res.json();
+      if (data.success) {
+        const encrypted = Cookies.get("IFUser_Info");
+        const bytes = CryptoJS.AES.decrypt(encrypted, secretKey);
+        const userData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+        const updatedData = { ...userData, genero: nuevoGenero };
+        Cookies.set("IFUser_Info", CryptoJS.AES.encrypt(JSON.stringify(updatedData), secretKey).toString(), { expires: 7 });
+        Swal.fire("Éxito", "Género actualizado correctamente", "success").then(() => {
+          window.location.reload();
         });
       } else {
-        setError(response.data.message || "No se pudo actualizar la información.");
+        Swal.fire("Error", data.message || "No se pudo actualizar el género", "error");
       }
-    } catch (err) {
-      setError(err.response?.data?.message || "Ocurrió un error al actualizar la información.");
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.error(error);
+      Swal.fire("Error", "Error inesperado al actualizar el género", "error");
     }
   };
 
-  const handleCloseModal = () => {
-    setShowModal(false); // Cerrar el modal
+  const cambiarContraseña = async (actual, nueva) => {
+    try {
+      const token = Cookies.get("authToken");
+      const res = await fetch(`${apiUrl}/auth/user-update-password`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ currentPassword: actual, newPassword: nueva }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        Swal.fire("¡Listo!", "Contraseña actualizada correctamente", "success");
+      } else {
+        Swal.fire("Error", data.message || "No se pudo actualizar la contraseña", "error");
+      }
+    } catch (error) {
+      console.error(error);
+      Swal.fire("Error", "Error inesperado al cambiar la contraseña", "error");
+    }
   };
 
-  if (!showModal) return null;
+  const mostrarModal = () => {
+    Swal.fire({
+  title: `
+    <div style="margin-bottom: 10px; font-size: 1.4rem">Editar Perfil</div>
+    <hr style="margin: 0; border: 1px solid #ddd;" />
+  `,
+  width: '800px', // ← AUMENTA EL ANCHO DEL MODAL
+  html: `
+    <style>
+    .edit-container_Profile {
+      display: flex;
+      gap: 30px;
+      margin-top: 20px;
+    }
+    .section_Profile {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+    }
+    .section-title_Profile {
+      font-weight: bold;
+      margin-bottom: 15px;
+      font-size: 1.15rem;
+      text-align: center;
+      border-bottom: 2px solid #e0e0e0;
+      padding-bottom: 5px;
+    }
+    .swal2-input-custom_Profile {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      margin-bottom: 15px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    .password-row_Profile {
+      display: flex;
+      gap: 10px;
+    }
+    .swal2-eye_Profile {
+      position: absolute;
+      top: 50%;
+      right: 10px;
+      transform: translateY(-50%);
+      cursor: pointer;
+      font-size: 1rem;
+      color: #555;
+    }
+    .swal2-password-container_Profile {
+      position: relative;
+      flex: 1;
+    }
+    .divider_Profile {
+      width: 1px;
+      background-color: #ccc;
+      margin: 0 10px;
+    }
+    .btn-final_Profile {
+      width: 100%;
+      padding: 12px;
+      background: #2a40bf;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      margin-top: 25px;
+    }
+  </style>
 
-  return (
-    <>
-      <style>
-        {`
-          /* Estilo básico para el modal */
-          .modal {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-          }
+  <div class="edit-container_Profile">
+    <div class="section_Profile">
+      <div class="section-title_Profile">Actualizar Género</div>
+      <label>Seleccionar Género:</label>
+      <select id="generoSelect" class="swal2-input-custom_Profile">
+        <option value="Hombre" ${genero === "Hombre" ? "selected" : ""}>Hombre</option>
+        <option value="Mujer" ${genero === "Mujer" ? "selected" : ""}>Mujer</option>
+        <option value="Indefinido" ${genero === "Indefinido" ? "selected" : ""}>Indefinido</option>
+      </select>
+    </div>
 
-          .modal-content {
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            width: 400px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            transform: scale(0.95);
-            transition: transform 0.3s ease-out;
-          }
+    <div class="divider_Profile"></div>
 
-          .modal-content.show {
-            transform: scale(1);
-          }
+    <div class="section_Profile">
+      <div class="section-title_Profile">Actualizar Contraseña</div>
+      <label>Contraseña actual:</label>
+      <div class="swal2-password-container_Profile">
+        <input id="passActual" type="password" class="swal2-input-custom_Profile" />
+        <i class="fa fa-eye swal2-eye_Profile" id="eyeActual"></i>
+      </div>
 
-          .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-          }
-
-          .modal-header h2 {
-            font-size: 20px;
-            font-weight: 600;
-            color: #333;
-            margin: 0;
-          }
-
-          .close-btn {
-            background: none;
-            border: none;
-            font-size: 24px;
-            color: #555;
-            cursor: pointer;
-          }
-
-          .form-group {
-            margin-bottom: 15px;
-          }
-
-          .form-group label {
-            font-size: 14px;
-            font-weight: 600;
-            color: #333;
-          }
-
-          .form-group input,
-          .form-group select {
-            width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 16px;
-            outline: none;
-            transition: border-color 0.3s;
-          }
-
-          .form-group input:focus,
-          .form-group select:focus {
-            border-color: #007bff;
-          }
-
-          .error-text {
-            color: red;
-            font-size: 14px;
-            margin-bottom: 10px;
-          }
-
-          .modal-footer {
-            text-align: right;
-          }
-
-          .modal-footer button {
-            padding: 10px 20px;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s;
-          }
-
-          .modal-footer button:hover {
-            background-color: #0056b3;
-          }
-
-          .modal-footer button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-          }
-        `}
-      </style>
-
-      <div className="modal">
-        <div className="modal-content">
-          <div className="modal-header">
-            <h2>Editar Información</h2>
-            <button className="close-btn" onClick={handleCloseModal}>
-              &times;
-            </button>
-          </div>
-          <form onSubmit={handleSubmit}>
-            <div className="modal-body">
-              {error && <div className="error-text">{error}</div>}
-              <div className="form-group">
-                <label htmlFor="name">Nombre completo:</label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={userData.name}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="gender">Género:</label>
-                <select
-                  id="gender"
-                  name="gender"
-                  value={userData.gender}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="Hombre">Hombre</option>
-                  <option value="Mujer">Mujer</option>
-                  <option value="Indefinido">Indefinido</option>
-                </select>
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button type="submit" className="submit-btn" disabled={loading}>
-                {loading ? "Guardando..." : "Guardar Cambios"}
-              </button>
-            </div>
-          </form>
+      <div class="password-row_Profile">
+        <div class="swal2-password-container_Profile">
+          <label>Nueva:</label>
+          <input id="passNueva" type="password" class="swal2-input-custom_Profile" />
+          <i class="fa fa-eye swal2-eye_Profile" id="eyeNueva"></i>
+        </div>
+        <div class="swal2-password-container_Profile">
+          <label>Confirmar:</label>
+          <input id="passConfirm" type="password" class="swal2-input-custom_Profile" />
+          <i class="fa fa-eye swal2-eye_Profile" id="eyeConfirm"></i>
         </div>
       </div>
-    </>
-  );
-}
+    </div>
+  </div>
 
-export default EditUser;
+  <button id="btnFinal" class="btn-final_Profile">Guardar Cambios</button>
+  `,
+  showConfirmButton: false,
+  showCloseButton: true,
+  willClose: () => {
+    if (setShowModal) setShowModal(false);
+  },
+  didOpen: () => {
+    // Toggle visibilidad
+    ["Actual", "Nueva", "Confirm"].forEach((campo) => {
+      const input = document.getElementById(`pass${campo}`);
+      const eye = document.getElementById(`eye${campo}`);
+      eye.addEventListener("click", () => {
+        input.type = input.type === "password" ? "text" : "password";
+        eye.classList.toggle("fa-eye");
+        eye.classList.toggle("fa-eye-slash");
+      });
+    });
+
+    document.getElementById("btnFinal").addEventListener("click", () => {
+      actualizarTodo();
+    });
+  },
+});
+
+  };
+
+  return null;
+};
+
+export default EditarPerfil;

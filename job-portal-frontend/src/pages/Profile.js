@@ -1,45 +1,88 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
 import "../styles/profile.css";
-import axios from "axios";
 import Cookies from "js-cookie";
 import EditUser from "./EditUser";
+import CryptoJS from "crypto-js";
 
+const secretKey = process.env.REACT_APP_SECRET_KEY;
 const apiUrl = process.env.REACT_APP_API_URL;
 
 function Profile() {
+
   const [user, setUser] = useState(null);
+  const [stats, setStats] = useState(null);
   const [error, setError] = useState("");
-  const [showModal, setShowModal] = useState(false); // Estado para controlar la visibilidad del modal
+  const [showModal, setShowModal] = useState(false);
+  const navigate = useNavigate();
+
+  const formatCourseName = (courseString) => {
+    if (!courseString) return "N/A";
+    
+    if (/^[A-Z]{2}-\d{3} G\d$/.test(courseString.trim())) {
+      return courseString;
+    }
+    
+    return courseString.split(',').map(course => {
+      const trimmed = course.trim();
+      const codeMatch = trimmed.match(/[A-Z]{2}-\d{3}/);
+      const groupMatch = trimmed.match(/G\d+/);
+      
+      const code = codeMatch ? codeMatch[0] : trimmed.substring(0, 6);
+      const group = groupMatch ? groupMatch[0] : trimmed.split(' ').pop();
+      
+      return `${code} ${group}`;
+    }).join(', ');
+  };
+
+  const handleHistoryClick = () => {
+    navigate(user.rol === "Profesor" ? "/teacher-history" : "/student-history");
+  };
+
+  const handleViewClick = (partidaId) => {
+    navigate(user.rol === "Profesor" 
+      ? `/teacher-history?partida=${partidaId}`
+      : `/student-history?partida=${partidaId}`
+    );
+  };
 
   useEffect(() => {
     fetchUserDetails();
   }, []);
 
   const fetchUserDetails = async () => {
+    const encryptedUserInfo = Cookies.get("IFUser_Info");
+    const token = Cookies.get("authToken");
+
+    if (!encryptedUserInfo || !token) {
+      setError("Debes iniciar sesión para ver tu perfil.");
+      return;
+    }
+
     try {
-      const token = Cookies.get("authToken");
-      if (!token) {
-        setError("Debes iniciar sesión para ver tu perfil.");
-        return;
-      }
+      const bytes = CryptoJS.AES.decrypt(encryptedUserInfo, secretKey);
+      const decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+      setUser(decryptedData);
 
-      const response = await axios.get(
-        `${apiUrl}/auth/user-profile`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const response = await fetch(`${apiUrl}/get-user-games`, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
         }
-      );
+      });
 
-      if (response.data.success) {
-        setUser(response.data.user);
+      if (response.ok) {
+        const data = await response.json();
+        setStats(data.data);
       } else {
-        setError(response.data.message || "No se pudo obtener la información del usuario.");
+        console.error("Error al obtener datos del perfil extendido.");
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Ocurrió un error.");
+      console.error("Error al desencriptar o al obtener datos:", err);
+      setError("Ocurrió un error al cargar tu perfil.");
     }
   };
 
@@ -53,98 +96,161 @@ function Profile() {
     );
   }
 
-  if (!user) {
-    return (
-      <Layout>
-        <section className="main__container">
-          <div className="loader"></div>
-          <p className="loading-text">Cargando datos del usuario...</p>
-        </section>
-      </Layout>
-    );
-  }
+  if (!user || !stats) {
+  return (
+    <Layout>
+      <section className="main__container_L">
+        <div className="loader_L"></div>
+        <p className="loading-text_L">Cargando datos del usuario...</p>
+      </section>
+    </Layout>
+  );
+}
 
   return (
     <Layout>
-      <section className="main__container">
-        <div className="container__top">
-          <div className="top__image">
+      <section className="main__container_PF">
+        {/* Sección superior - Información del usuario */}
+        <div className="container__top_PF">
+          <div className="top__image_PF">
             <img
-              className="image__user"
-              src={`https://api.dicebear.com/7.x/identicon/svg?seed=${user.name}`}
+              className="image__user_PF"
+              src={`https://api.dicebear.com/7.x/identicon/svg?seed=${user.nombre}`}
               alt="User Avatar"
             />
           </div>
-          <div className="top__info">
-            <div className="info__box">
-              <h1 className="info__title">{user.name}</h1>
-              <span>{user.role}</span>
+          <div className="top__info_PF">
+            <div className="info__box_PF">
+              <h1 className="info__title_PF">{`${user.nombre} ${user.apellido1} ${user.apellido2}`}</h1>
+              <span className="info__role_PF">{user.rol}</span>
             </div>
-            <div className="info__stats">
-              <div className="stats__group">
-                <div className="stats__icon">
+            <div className="info__stats_PF">
+              <div className="stats__group_PF">
+                <div className="stats__icon_PF">
                   <i className="fa-solid fa-flag"></i>
                 </div>
-                <div className="stats__text">
-                  <h3>0</h3>
+                <div className="stats__text_PF">
+                  <h3>{stats.simulaciones}</h3>
                   <span>Simulaciones realizadas</span>
                 </div>
               </div>
-              <div className="stats__group">
-                <div className="stats__icon">
-                  <i className="fa-solid fa-circle-check"></i>
+              {user.rol === "Estudiante" && (
+                <div className="stats__group_PF">
+                  <div className="stats__icon_PF">
+                    <i className="fa-solid fa-circle-check"></i>
+                  </div>
+                  <div className="stats__text_PF">
+                    <h3>{stats.logros}</h3>
+                    <span>Logros</span>
+                  </div>
                 </div>
-                <div className="stats__text">
-                  <h3>0</h3>
-                  <span>Logros</span>
-                </div>
-              </div>
+              )}
             </div>
           </div>
-          <div className="top__edit">
-            <button className="edit__btn" onClick={() => setShowModal(true)}>
-              Editar Información
+          <div className="top__edit_PF">
+            <button 
+              className="edit__btn_PF" 
+              onClick={() => setShowModal(true)}
+            >
+              Editar Perfil
             </button>
           </div>
         </div>
-        <div className="container__middle">
+
+        {/* Sección media - Información personal */}
+        <div className="container__middle_PF">
           <div className="container__heading">
             <h3>Información personal</h3>
           </div>
-          <div className="middle__content">
-            <div className="content__info">
-              <label className="info__label">Nombre completo:</label>
-              <input className="info__input" type="text" value={user.name} readOnly />
+          <div className="middle__content_PF">
+            <div className="content__info_PF">
+              <label className="info__label_PF">Nombre completo:</label>
+              <input 
+                className="info__input_PF" 
+                type="text" 
+                value={`${user.nombre} ${user.apellido1} ${user.apellido2}`} 
+                readOnly 
+              />
             </div>
-            <div className="content__info">
-              <label className="info__label">Curso:</label>
-              <input className="info__input" type="text" value={user.groupName || "N/A"} readOnly />
+            <div className="content__info_PF">
+              <label className="info__label_PF">Curso:</label>
+              <input
+                className="info__input_PF"
+                type="text"
+                value={formatCourseName(stats.cursoActual)}
+                readOnly
+              />
             </div>
-            <div className="content__info">
-              <label className="info__label">Correo electrónico:</label>
-              <input className="info__input" type="text" value={user.email} readOnly />
+            <div className="content__info_PF">
+              <label className="info__label_PF">Correo electrónico:</label>
+              <input 
+                className="info__input_PF" 
+                type="text" 
+                value={user.correo} 
+                readOnly 
+              />
             </div>
-            <div className="content__info">
-              <label className="info__label">Género:</label>
-              <input className="info__input" type="text" value={user.gender} readOnly />
+            <div className="content__info_PF">
+              <label className="info__label_PF">Género:</label>
+              <input 
+                className="info__input_PF" 
+                type="text" 
+                value={user.genero} 
+                readOnly 
+              />
             </div>
           </div>
         </div>
-        <div className="container__bottom">
-          <div className="container__heading">
+
+        {/* Sección inferior - Simulaciones recientes */}
+        <div className="container__simulations">
+          <div className="simulations__heading">
             <h3>Simulaciones recientes</h3>
-            <a className="bottom__text" href="/">
+            <button 
+              className="bottom__link"
+              onClick={handleHistoryClick}
+            >
               Ver historial completo
-            </a>
+            </button>
           </div>
-          <div className="bottom__content">
-            <span className="bottom__text">¡Todavía no has hecho una simulación!</span>
+
+          <div className="simulations__content">
+            {stats.ultimasPartidas.length === 0 ? (
+              <span className="simulations__empty">¡Todavía no has hecho una simulación!</span>
+            ) : (
+              <table className="simulations__table">
+                <thead className="table__head">
+                  <th className="table__header">Fecha</th>
+                  <th className="table__header">Curso</th>
+                  <th className="table__header">Equipo</th>
+                  <th className="table__header">Acción</th>
+                </thead>
+                <tbody className="table__body">
+                  <div className="body__list">
+                    {stats.ultimasPartidas.map((partida, index) => (
+                      <tr className="table__row" key={index}>
+                        <td className="table__data">{new Date(partida.fecha).toLocaleDateString()}</td>
+                        <td className="table__data">{formatCourseName(partida.curso)}</td>
+                        <td className="table__data">{partida.equipo || "-"}</td>
+                        <td className="table__data">
+                          <button 
+                            className="table__button"
+                            onClick={() => handleViewClick(partida.id)}
+                          >
+                            <i className="fa-solid fa-eye"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </div>                  
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       </section>
 
-      {/* Aquí se renderiza el modal de edición cuando showModal es true */}
-      {showModal && <EditUser showModal={showModal} setShowModal={setShowModal} />}
+      {showModal && <EditUser setShowModal={setShowModal} />}
     </Layout>
   );
 }
