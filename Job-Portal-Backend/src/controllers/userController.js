@@ -1,10 +1,10 @@
-import { poolPromise } from "../config/db.js";  // Importamos el poolPromise
+import { poolPromise } from "../config/db.js";  
 import UserModel from "../models/userModel.js";
 
 // Obtener todos los usuarios
 export const getAllUsers = async (req, res) => {
   try {
-    const pool = await poolPromise;  // Esperamos que se resuelva el pool de conexiones
+    const pool = await poolPromise;  
     const result = await pool.request().query("SELECT * FROM Usuario_TB");
 
     if (result.recordset.length === 0) {
@@ -25,15 +25,13 @@ export const getAllUsers = async (req, res) => {
 export const createUser = async (req, res) => {
   const { nombre, correo, contraseña, rolId, generoId} = req.body;
 
-  // Validar los campos requeridos
   if (!nombre || !correo || !contraseña || !rolId || !generoId) {
     return res.status(400).json({ message: "All fields are required" });
   }
 
   try {
-    const pool = await poolPromise;  // Esperamos que se resuelva el pool de conexiones
+    const pool = await poolPromise;  
 
-    // Verificar si el usuario ya existe
     const result = await pool.request()
       .input("correo", correo)
       .query("SELECT * FROM Usuario_TB WHERE Correo = @correo");
@@ -42,10 +40,8 @@ export const createUser = async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    // Encriptar la contraseña
     const hashedPassword = await bcrypt.hash(contraseña, 10);
 
-    // Insertar el nuevo usuario en la base de datos
     const insertResult = await pool.request()
       .input("nombre", nombre)
       .input("correo", correo)
@@ -57,7 +53,6 @@ export const createUser = async (req, res) => {
         VALUES (@nombre, @correo, @contraseña, @rolId, @generoId)
       `);
 
-    // Crear un nuevo objeto UserModel con los datos
     const newUser = new UserModel({ 
       nombre, 
       correo, 

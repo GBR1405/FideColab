@@ -1,4 +1,3 @@
-// routes/userRoutes.js
 import express from 'express';
 import {generateStudentsReport, agregarCurso, obtenerCursos, obtenerUltimoGrupoCurso, guardarGrupo, agregarProfesor,
         getAllProfessors, getAllGroups, generateProfesorReport, generatePartidaReport, generateBitacoraReport, obtenerCursosDelProfesor,

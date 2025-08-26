@@ -1,4 +1,3 @@
-// routes/userRoutes.js
 import express from 'express';
 import { getAllUsers, createUser } from '../controllers/userController.js';
 

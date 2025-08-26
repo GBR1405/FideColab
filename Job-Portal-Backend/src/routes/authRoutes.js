@@ -1,4 +1,3 @@
-// routes/userRoutes.js
 import express from 'express';
 import {login, register, forgotPassword, resetPassword, updateUser, getFullUserDetails, updatePassword} from '../controllers/authController.js';
 import { loginLimiter } from "../middleware/loginLimiter.js";

@@ -33,6 +33,7 @@ export const getTemasPorJuego = async (req, res) => {
   }
 };
 
+// Obtener todos los temas (activos e inactivos)
 export const getTemasPorJuegoTotal = async (req, res) => {
   try {
     const pool = await poolPromise;
@@ -44,7 +45,7 @@ export const getTemasPorJuegoTotal = async (req, res) => {
         FROM Tema_Juego_TB tjt
         JOIN Tipo_Juego_TB tj ON tjt.Tipo_Juego_ID_FK = tj.Tipo_Juego_ID_PK
         ORDER BY tjt.Tema_Juego_ID_PK DESC
-      `);  
+      `);
     res.json({ success: true, temas: result.recordset });
   } catch (error) {
     console.error("Error al obtener temas:", error);
@@ -52,163 +53,148 @@ export const getTemasPorJuegoTotal = async (req, res) => {
   }
 };
 
-
-
-
 // Guardar configuración de personalización
 export const guardarPersonalizacion = async (req, res) => {
-    try {
-        // Desestructurar los datos recibidos del frontend
-        const { juegos, titulo, usuarioId } = req.body; // No necesitamos personalizacionId aquí
+  try {
+    const { juegos, titulo, usuarioId } = req.body; // No necesitamos personalizacionId aquí
 
-        if (!usuarioId) {
-            return res.status(400).json({ success: false, error: "ID de usuario no proporcionado" });
-        }
-
-        if (!juegos || juegos.length === 0) {
-            return res.status(400).json({ success: false, error: "No hay juegos seleccionados" });
-        }
-
-        const pool = await poolPromise;
-
-        // Crear la nueva personalización
-        const resultPersonalizacion = await pool
-            .request()
-            .input("Nombre", sql.NVarChar, titulo)
-            .input("UsuarioID", sql.Int, usuarioId)
-            .query(
-                "INSERT INTO Personalizacion_TB (Nombre_Personalizacion, Usuario_ID_FK, Estado) OUTPUT INSERTED.Personalizacion_ID_PK VALUES (@Nombre, @UsuarioID, 1)"
-            );
-
-        const personalizacionId = resultPersonalizacion.recordset[0].Personalizacion_ID_PK;
-
-        // Insertar la configuración de juegos
-        for (const juego of juegos) {
-            //console.log("Juego a insertar:", juego);
-
-            if ((juego.Juego !== 'Memoria' && (!juego.tema || juego.tema === null || juego.tema === undefined))) {
-              return res.status(400).json({ success: false, error: "Tema no seleccionado para el juego " + juego.Juego });
-            }
-
-            await pool
-                .request()
-                .input("JuegoID", sql.Int, juego.Tipo_Juego_ID_PK)
-                .input("PersonalizacionID", sql.Int, personalizacionId)
-                .input("Dificultad", sql.Int, juego.dificultad)
-                .input("Orden", sql.Int, juego.orden)
-                .input("TemaID", sql.Int, juego.tema)
-                .query(
-                    "INSERT INTO ConfiguracionJuego_TB (Tipo_Juego_ID_FK, Personalizacion_ID_PK, Dificultad, Orden, Tema_Juego_ID_FK) VALUES (@JuegoID, @PersonalizacionID, @Dificultad, @Orden, @TemaID)"
-                );
-        }
-
-        res.json({ success: true, message: "Configuración guardada con éxito" });
-    } catch (error) {
-        console.error("Error al guardar personalización:", error);
-        res.status(500).json({ success: false, error: "Error al guardar configuración" });
+    if (!usuarioId) {
+      return res.status(400).json({ success: false, error: "ID de usuario no proporcionado" });
     }
+
+    if (!juegos || juegos.length === 0) {
+      return res.status(400).json({ success: false, error: "No hay juegos seleccionados" });
+    }
+
+    const pool = await poolPromise;
+
+    const resultPersonalizacion = await pool
+      .request()
+      .input("Nombre", sql.NVarChar, titulo)
+      .input("UsuarioID", sql.Int, usuarioId)
+      .query(
+        "INSERT INTO Personalizacion_TB (Nombre_Personalizacion, Usuario_ID_FK, Estado) OUTPUT INSERTED.Personalizacion_ID_PK VALUES (@Nombre, @UsuarioID, 1)"
+      );
+
+    const personalizacionId = resultPersonalizacion.recordset[0].Personalizacion_ID_PK;
+
+    for (const juego of juegos) {
+
+      if ((juego.Juego !== 'Memoria' && (!juego.tema || juego.tema === null || juego.tema === undefined))) {
+        return res.status(400).json({ success: false, error: "Tema no seleccionado para el juego " + juego.Juego });
+      }
+
+      await pool
+        .request()
+        .input("JuegoID", sql.Int, juego.Tipo_Juego_ID_PK)
+        .input("PersonalizacionID", sql.Int, personalizacionId)
+        .input("Dificultad", sql.Int, juego.dificultad)
+        .input("Orden", sql.Int, juego.orden)
+        .input("TemaID", sql.Int, juego.tema)
+        .query(
+          "INSERT INTO ConfiguracionJuego_TB (Tipo_Juego_ID_FK, Personalizacion_ID_PK, Dificultad, Orden, Tema_Juego_ID_FK) VALUES (@JuegoID, @PersonalizacionID, @Dificultad, @Orden, @TemaID)"
+        );
+    }
+
+    res.json({ success: true, message: "Configuración guardada con éxito" });
+  } catch (error) {
+    console.error("Error al guardar personalización:", error);
+    res.status(500).json({ success: false, error: "Error al guardar configuración" });
+  }
 };
 
+// Editar configuración de personalización
 export const editarPersonalizacion = async (req, res) => {
   try {
-      const { juegos, personalizacionId, titulo, usuarioId } = req.body;
+    const { juegos, personalizacionId, titulo, usuarioId } = req.body;
 
-      if (!usuarioId) {
-          return res.status(400).json({ success: false, error: "ID de usuario no proporcionado" });
-      }
+    if (!usuarioId) {
+      return res.status(400).json({ success: false, error: "ID de usuario no proporcionado" });
+    }
 
-      if (!personalizacionId) {
-          return res.status(400).json({ success: false, error: "ID de personalización no proporcionado" });
-      }
+    if (!personalizacionId) {
+      return res.status(400).json({ success: false, error: "ID de personalización no proporcionado" });
+    }
 
-      if (!juegos || juegos.length === 0) {
-          return res.status(400).json({ success: false, error: "No hay juegos seleccionados" });
-      }
+    if (!juegos || juegos.length === 0) {
+      return res.status(400).json({ success: false, error: "No hay juegos seleccionados" });
+    }
 
-      const pool = await poolPromise;
+    const pool = await poolPromise;
 
-      // Verificar si la personalización está siendo usada en alguna partida
-      const partidaResult = await pool
+    const partidaResult = await pool
+      .request()
+      .input("PersonalizacionID", sql.Int, personalizacionId)
+      .query("SELECT COUNT(*) as count FROM Partida_TB WHERE Personalizacion_ID_FK = @PersonalizacionID");
+
+    const estaEnUso = partidaResult.recordset[0].count > 0;
+
+    let nuevaPersonalizacionId = personalizacionId;
+
+    if (estaEnUso) {
+      const resultNuevaPersonalizacion = await pool
+        .request()
+        .input("Nombre", sql.NVarChar, titulo)
+        .input("UsuarioID", sql.Int, usuarioId)
+        .query(
+          "INSERT INTO Personalizacion_TB (Nombre_Personalizacion, Usuario_ID_FK) OUTPUT INSERTED.Personalizacion_ID_PK VALUES (@Nombre, @UsuarioID)"
+        );
+
+      nuevaPersonalizacionId = resultNuevaPersonalizacion.recordset[0].Personalizacion_ID_PK;
+
+      for (const juego of juegos) {
+        await pool
           .request()
-          .input("PersonalizacionID", sql.Int, personalizacionId)
-          .query("SELECT COUNT(*) as count FROM Partida_TB WHERE Personalizacion_ID_FK = @PersonalizacionID");
-
-      const estaEnUso = partidaResult.recordset[0].count > 0;
-
-      let nuevaPersonalizacionId = personalizacionId;
-
-      // Si está en uso, crear una copia y desactivar la original
-      if (estaEnUso) {
-          // Crear la nueva personalización (copia)
-          const resultNuevaPersonalizacion = await pool
-              .request()
-              .input("Nombre", sql.NVarChar, titulo)
-              .input("UsuarioID", sql.Int, usuarioId)
-              .query(
-                  "INSERT INTO Personalizacion_TB (Nombre_Personalizacion, Usuario_ID_FK) OUTPUT INSERTED.Personalizacion_ID_PK VALUES (@Nombre, @UsuarioID)"
-              );
-
-          nuevaPersonalizacionId = resultNuevaPersonalizacion.recordset[0].Personalizacion_ID_PK;
-
-          // Copiar la configuración de juegos a la nueva personalización
-          for (const juego of juegos) {
-              await pool
-                  .request()
-                  .input("JuegoID", sql.Int, juego.Tipo_Juego_ID_PK)
-                  .input("PersonalizacionID", sql.Int, nuevaPersonalizacionId)
-                  .input("Dificultad", sql.Int, juego.dificultad)
-                  .input("Orden", sql.Int, juego.orden)
-                  .input("TemaID", sql.Int, juego.tema)
-                  .query(
-                      "INSERT INTO ConfiguracionJuego_TB (Tipo_Juego_ID_FK, Personalizacion_ID_PK, Dificultad, Orden, Tema_Juego_ID_FK) VALUES (@JuegoID, @PersonalizacionID, @Dificultad, @Orden, @TemaID)"
-                  );
-          }
-
-          // Desactivar la personalización original
-          await pool
-              .request()
-              .input("PersonalizacionID", sql.Int, personalizacionId)
-              .query("UPDATE Personalizacion_TB SET Activo = 0 WHERE Personalizacion_ID_PK = @PersonalizacionID");
-
-          return res.json({ 
-              success: true, 
-              message: "La personalización estaba en uso en partidas existentes. Se ha creado una copia y desactivado la original.",
-              nuevaPersonalizacionId 
-          });
-      } else {
-          // Si no está en uso, editar normalmente
-          // Actualizar el nombre de la personalización
-          await pool
-              .request()
-              .input("PersonalizacionID", sql.Int, personalizacionId)
-              .input("Titulo", sql.NVarChar, titulo)
-              .query("UPDATE Personalizacion_TB SET Nombre_Personalizacion = @Titulo WHERE Personalizacion_ID_PK = @PersonalizacionID");
-
-          // Eliminar los juegos anteriores
-          await pool
-              .request()
-              .input("PersonalizacionID", sql.Int, personalizacionId)
-              .query("DELETE FROM ConfiguracionJuego_TB WHERE Personalizacion_ID_PK = @PersonalizacionID");
-
-          // Insertar los nuevos juegos
-          for (const juego of juegos) {
-              await pool
-                  .request()
-                  .input("JuegoID", sql.Int, juego.Tipo_Juego_ID_PK)
-                  .input("PersonalizacionID", sql.Int, personalizacionId)
-                  .input("Dificultad", sql.Int, juego.dificultad)
-                  .input("Orden", sql.Int, juego.orden)
-                  .input("TemaID", sql.Int, juego.tema)
-                  .query(
-                      "INSERT INTO ConfiguracionJuego_TB (Tipo_Juego_ID_FK, Personalizacion_ID_PK, Dificultad, Orden, Tema_Juego_ID_FK) VALUES (@JuegoID, @PersonalizacionID, @Dificultad, @Orden, @TemaID)"
-                  );
-          }
-
-          return res.json({ success: true, message: "Configuración editada con éxito" });
+          .input("JuegoID", sql.Int, juego.Tipo_Juego_ID_PK)
+          .input("PersonalizacionID", sql.Int, nuevaPersonalizacionId)
+          .input("Dificultad", sql.Int, juego.dificultad)
+          .input("Orden", sql.Int, juego.orden)
+          .input("TemaID", sql.Int, juego.tema)
+          .query(
+            "INSERT INTO ConfiguracionJuego_TB (Tipo_Juego_ID_FK, Personalizacion_ID_PK, Dificultad, Orden, Tema_Juego_ID_FK) VALUES (@JuegoID, @PersonalizacionID, @Dificultad, @Orden, @TemaID)"
+          );
       }
+
+      await pool
+        .request()
+        .input("PersonalizacionID", sql.Int, personalizacionId)
+        .query("UPDATE Personalizacion_TB SET Activo = 0 WHERE Personalizacion_ID_PK = @PersonalizacionID");
+
+      return res.json({
+        success: true,
+        message: "La personalización estaba en uso en partidas existentes. Se ha creado una copia y desactivado la original.",
+        nuevaPersonalizacionId
+      });
+    } else {
+      await pool
+        .request()
+        .input("PersonalizacionID", sql.Int, personalizacionId)
+        .input("Titulo", sql.NVarChar, titulo)
+        .query("UPDATE Personalizacion_TB SET Nombre_Personalizacion = @Titulo WHERE Personalizacion_ID_PK = @PersonalizacionID");
+
+      await pool
+        .request()
+        .input("PersonalizacionID", sql.Int, personalizacionId)
+        .query("DELETE FROM ConfiguracionJuego_TB WHERE Personalizacion_ID_PK = @PersonalizacionID");
+
+      for (const juego of juegos) {
+        await pool
+          .request()
+          .input("JuegoID", sql.Int, juego.Tipo_Juego_ID_PK)
+          .input("PersonalizacionID", sql.Int, personalizacionId)
+          .input("Dificultad", sql.Int, juego.dificultad)
+          .input("Orden", sql.Int, juego.orden)
+          .input("TemaID", sql.Int, juego.tema)
+          .query(
+            "INSERT INTO ConfiguracionJuego_TB (Tipo_Juego_ID_FK, Personalizacion_ID_PK, Dificultad, Orden, Tema_Juego_ID_FK) VALUES (@JuegoID, @PersonalizacionID, @Dificultad, @Orden, @TemaID)"
+          );
+      }
+
+      return res.json({ success: true, message: "Configuración editada con éxito" });
+    }
   } catch (error) {
-      console.error("Error al editar personalización:", error);
-      res.status(500).json({ success: false, error: "Error al editar configuración" });
+    console.error("Error al editar personalización:", error);
+    res.status(500).json({ success: false, error: "Error al editar configuración" });
   }
 };
 
@@ -281,8 +267,8 @@ export const saveTemaJuego = async (req, res) => {
     await pool
       .request()
       .input("tipoJuegoID", sql.Int, tipoJuegoID)
-      .input("contenido", sql.NVarChar, contenido) // Guarda la URL de la imagen o el texto
-      .input("estado", sql.Bit, 1) // Estado activo
+      .input("contenido", sql.NVarChar, contenido)
+      .input("estado", sql.Bit, 1)
       .query(sqlQuery);
 
     res.json({ success: true, message: "Tema guardado correctamente" });
@@ -302,13 +288,12 @@ export const deletePersonalization = async (req, res) => {
 
     var pool = await poolPromise;
 
-    // Primero verificar si la personalización está siendo usada en Partida_TB
     var checkUsageQuery = `
       SELECT COUNT(*) as usageCount 
       FROM Partida_TB 
       WHERE Personalizacion_ID_FK = @personalizationId
     `;
-    
+
     const usageResult = await pool.request()
       .input("personalizationId", sql.Int, personalizationId)
       .query(checkUsageQuery);
@@ -316,7 +301,6 @@ export const deletePersonalization = async (req, res) => {
     const isUsed = usageResult.recordset[0].usageCount > 0;
 
     if (isUsed) {
-      // Si está siendo usada, actualizar el estado a 2 (inactivo)
       var updateQuery = `
         UPDATE Personalizacion_TB
         SET Estado = 2
@@ -326,12 +310,11 @@ export const deletePersonalization = async (req, res) => {
         .input("personalizationId", sql.Int, personalizationId)
         .query(updateQuery);
 
-      return res.json({ 
-        success: true, 
-        message: "La personalización está en uso. Se ha marcado como inactiva (Estado 2) en lugar de borrarla." 
+      return res.json({
+        success: true,
+        message: "La personalización está en uso. Se ha marcado como inactiva (Estado 2) en lugar de borrarla."
       });
     } else {
-      // Primero eliminar todas las configuraciones relacionadas con la personalización
       const deleteConfigsQuery = `
         DELETE FROM ConfiguracionJuego_TB
         WHERE Personalizacion_ID_PK = @personalizationId
@@ -340,7 +323,6 @@ export const deletePersonalization = async (req, res) => {
         .input("personalizationId", sql.Int, personalizationId)
         .query(deleteConfigsQuery);
 
-      // Luego eliminar la personalización
       const deletePersonalizationQuery = `
         DELETE FROM Personalizacion_TB
         WHERE Personalizacion_ID_PK = @personalizationId
@@ -349,39 +331,39 @@ export const deletePersonalization = async (req, res) => {
         .input("personalizationId", sql.Int, personalizationId)
         .query(deletePersonalizationQuery);
 
-      return res.json({ 
-        success: true, 
-        message: "Personalización eliminada correctamente" 
+      return res.json({
+        success: true,
+        message: "Personalización eliminada correctamente"
       });
     }
 
   } catch (error) {
     console.error("Error al eliminar personalización:", error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       error: "Error al eliminar personalización",
-      details: error.message 
+      details: error.message
     });
   }
 };
 
+// Obtener personalización por ID
 export const obtenerPersonalizacionPorId = async (req, res) => {
   try {
     console.log("Obteniendo personalización por ID...");
     console.log("Headers:", req.body);
-    
+
     // Obtener el ID de los parámetros de consulta
     const { id } = req.body;
     if (!id) {
-      return res.status(400).json({ 
-        success: false, 
+      return res.status(400).json({
+        success: false,
         error: "ID de personalización no proporcionado"
       });
     }
 
     const pool = await poolPromise;
 
-    // 1. Obtener información básica de la personalización
     const personalizacionResult = await pool
       .request()
       .input("PersonalizacionID", sql.Int, id)
@@ -396,15 +378,14 @@ export const obtenerPersonalizacionPorId = async (req, res) => {
       `);
 
     if (personalizacionResult.recordset.length === 0) {
-      return res.status(404).json({ 
-        success: false, 
+      return res.status(404).json({
+        success: false,
         error: "Personalización no encontrada o inactiva"
       });
     }
 
     const personalizacion = personalizacionResult.recordset[0];
 
-    // 2. Obtener juegos configurados
     const juegosResult = await pool
       .request()
       .input("PersonalizacionID", sql.Int, id)
@@ -424,11 +405,10 @@ export const obtenerPersonalizacionPorId = async (req, res) => {
 
     const juegos = juegosResult.recordset;
 
-    // 3. Obtener temas para cada juego (excepto Memoria)
     const juegosConTemas = await Promise.all(
       juegos.map(async (juego) => {
         if (juego.Juego === 'Memoria') {
-          return { 
+          return {
             ...juego,
             temas: [],
             tema: null
@@ -450,7 +430,7 @@ export const obtenerPersonalizacionPorId = async (req, res) => {
         return {
           ...juego,
           temas: temasResult.recordset,
-          tema: juego.temaId  // Mantener el tema seleccionado
+          tema: juego.temaId
         };
       })
     );
@@ -467,11 +447,11 @@ export const obtenerPersonalizacionPorId = async (req, res) => {
 
   } catch (error) {
     console.error("Error al obtener personalización:", error);
-    
-    res.status(500).json({ 
-      success: false, 
+
+    res.status(500).json({
+      success: false,
       error: "Error al obtener personalización",
-      details: error.message 
+      details: error.message
     });
   }
 };

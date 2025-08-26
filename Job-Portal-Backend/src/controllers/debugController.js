@@ -1,4 +1,4 @@
-import { poolPromise } from "../config/db.js"; 
+import { poolPromise } from "../config/db.js";
 import sql from "mssql";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -32,13 +32,11 @@ function generateRandomPassword() {
   return password;
 }
 
-/**
- * Agregar un nuevo usuario
- */
+// Agregar un nuevo usuario
 export const agregarUsuario = async (req, res) => {
   const { nombre, apellido1, apellido2, correo, rol, genero } = req.body;
 
-  if (!nombre || !apellido1 || !apellido2 || !correo ||  !rol || !genero) {
+  if (!nombre || !apellido1 || !apellido2 || !correo || !rol || !genero) {
     return res.status(400).json({ success: false, message: "Todos los campos son obligatorios" });
   }
 
@@ -48,7 +46,6 @@ export const agregarUsuario = async (req, res) => {
     const password = generateRandomPassword();
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Obtener ID del rol
     const rolResult = await pool.request()
       .input("rol", sql.NVarChar, rol)
       .query("SELECT Rol_ID_PK FROM Rol_TB WHERE Rol = @rol");
@@ -58,7 +55,6 @@ export const agregarUsuario = async (req, res) => {
     }
     const rolId = rolResult.recordset[0].Rol_ID_PK;
 
-    // Insertar nuevo usuario
     const result = await pool.request()
       .input("nombre", sql.NVarChar, nombre)
       .input("apellido1", sql.NVarChar, apellido1)
@@ -76,7 +72,6 @@ export const agregarUsuario = async (req, res) => {
 
     const userId = result.recordset[0].Usuario_ID_PK;
 
-    // Enviar correo de bienvenida
     await transporter.sendMail({
       from: `"Bienvenida a FideColab" <${process.env.EMAIL_USER}>`,
       to: correo,
@@ -175,7 +170,7 @@ export const agregarUsuario = async (req, res) => {
         apellido1,
         apellido2,
         correo,
-        password, // Solo para modo debug, en producción no enviar
+        password,
         rol,
         genero
       }
@@ -187,9 +182,7 @@ export const agregarUsuario = async (req, res) => {
   }
 };
 
-/**
- * Editar un usuario existente
- */
+// Editar un usuario
 export const editarUsuario = async (req, res) => {
   const { userId } = req.params;
   const { nombre, apellido1, apellido2, rol, genero, cursos } = req.body;
@@ -201,7 +194,6 @@ export const editarUsuario = async (req, res) => {
   try {
     const pool = await poolPromise;
 
-    // Verificar que el usuario existe
     const userCheck = await pool.request()
       .input("userId", sql.Int, userId)
       .query("SELECT * FROM Usuario_TB WHERE Usuario_ID_PK = @userId");
@@ -210,7 +202,6 @@ export const editarUsuario = async (req, res) => {
       return res.status(404).json({ success: false, message: "Usuario no encontrado" });
     }
 
-    // Obtener ID del rol
     const rolResult = await pool.request()
       .input("rol", sql.NVarChar, rol)
       .query("SELECT Rol_ID_PK FROM Rol_TB WHERE Rol = @rol");
@@ -220,7 +211,6 @@ export const editarUsuario = async (req, res) => {
     }
     const rolId = rolResult.recordset[0].Rol_ID_PK;
 
-    // Actualizar datos básicos del usuario
     await pool.request()
       .input("userId", sql.Int, userId)
       .input("nombre", sql.NVarChar, nombre)
@@ -238,14 +228,11 @@ export const editarUsuario = async (req, res) => {
         WHERE Usuario_ID_PK = @userId
       `);
 
-    // Si se proporcionaron cursos, actualizar las vinculaciones
     if (cursos && Array.isArray(cursos)) {
-      // Primero eliminar todas las vinculaciones existentes
       await pool.request()
         .input("userId", sql.Int, userId)
         .query("DELETE FROM GrupoVinculado_TB WHERE Usuario_ID_FK = @userId");
 
-      // Agregar las nuevas vinculaciones
       for (const cursoId of cursos) {
         await pool.request()
           .input("userId", sql.Int, userId)
@@ -270,10 +257,7 @@ export const editarUsuario = async (req, res) => {
   }
 };
 
-/**
- * Restaurar contraseña de un usuario
- */
-
+// Restaurar contraseña de un usuario
 const passwordResetEmailTemplate = (userEmail, newPassword) => {
   return `
     <html>
@@ -361,7 +345,6 @@ export const restaurarContrasena = async (req, res) => {
   try {
     const pool = await poolPromise;
 
-    // Verificar que el usuario existe
     const userResult = await pool.request()
       .input("userId", sql.Int, userId)
       .query("SELECT Correo FROM Usuario_TB WHERE Usuario_ID_PK = @userId");
@@ -374,13 +357,11 @@ export const restaurarContrasena = async (req, res) => {
     const newPassword = generateRandomPassword();
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Actualizar contraseña
     await pool.request()
       .input("userId", sql.Int, userId)
       .input("newPassword", sql.NVarChar, hashedPassword)
       .query("UPDATE Usuario_TB SET Contraseña = @newPassword WHERE Usuario_ID_PK = @userId");
 
-    // Enviar correo con la nueva contraseña
     await transporter.sendMail({
       from: `"Soporte FideColab" <${process.env.EMAIL_USER}>`,
       to: userEmail,
@@ -401,24 +382,21 @@ export const restaurarContrasena = async (req, res) => {
   }
 };
 
-/**
- * Eliminar un usuario (con jerarquía según rol)
- */
+// Eliminar un usuario y todas sus dependencias
 export const eliminarUsuario = async (req, res) => {
   const { userId } = req.params;
   console.log("Eliminando usuario con ID:", userId);
 
   if (isNaN(userId)) {
-    return res.status(400).json({ 
-      success: false, 
-      message: "ID de usuario debe ser un número válido" 
+    return res.status(400).json({
+      success: false,
+      message: "ID de usuario debe ser un número válido"
     });
   }
 
   try {
     const pool = await poolPromise;
 
-    // Verificar que el usuario existe y obtener su rol
     const userResult = await pool.request()
       .input("userId", sql.Int, userId)
       .query(`
@@ -435,30 +413,24 @@ export const eliminarUsuario = async (req, res) => {
     const user = userResult.recordset[0];
     const rol = user.Rol;
 
-    // Iniciar transacción para asegurar integridad
     const transaction = new sql.Transaction(await pool.connect());
     await transaction.begin();
 
     try {
-      // Eliminar según el rol
       if (rol === "Estudiante") {
-        // 1. Eliminar participaciones en partidas
         await transaction.request()
           .input("userId", sql.Int, userId)
           .query("DELETE FROM Participantes_TB WHERE Usuario_ID_FK = @userId");
 
-        // 2. Eliminar logros del estudiante
         await transaction.request()
           .input("userId", sql.Int, userId)
           .query("DELETE FROM Usuario_Logros_TB WHERE Usuario_ID_FK = @userId");
 
-        // 3. Eliminar vinculaciones a grupos
         await transaction.request()
           .input("userId", sql.Int, userId)
           .query("DELETE FROM GrupoVinculado_TB WHERE Usuario_ID_FK = @userId");
 
       } else if (rol === "Profesor") {
-        // 1. Obtener todas las partidas del profesor
         const partidasResult = await transaction.request()
           .input("userId", sql.Int, userId)
           .query("SELECT Partida_ID_PK FROM Partida_TB WHERE Profesor_ID_FK = @userId");
@@ -466,21 +438,18 @@ export const eliminarUsuario = async (req, res) => {
         const partidasIds = partidasResult.recordset.map(p => p.Partida_ID_PK);
 
         if (partidasIds.length > 0) {
-          // 2. Eliminar participantes de esas partidas
           await transaction.request()
             .query(`
               DELETE FROM Participantes_TB 
               WHERE Partida_ID_FK IN (${partidasIds.join(",")})
             `);
 
-          // 3. Eliminar logros de esas partidas
           await transaction.request()
             .query(`
               DELETE FROM Usuario_Logros_TB 
               WHERE Partida_ID_FK IN (${partidasIds.join(",")})
             `);
 
-          // 4. Eliminar resultados de esas partidas (si es necesario)
           await transaction.request()
             .query(`
               DELETE FROM Resultados_TB 
@@ -488,12 +457,10 @@ export const eliminarUsuario = async (req, res) => {
             `);
         }
 
-        // 5. Eliminar las partidas del profesor
         await transaction.request()
           .input("userId", sql.Int, userId)
           .query("DELETE FROM Partida_TB WHERE Profesor_ID_FK = @userId");
 
-        // 6. Eliminar configuraciones de juego del profesor
         await transaction.request()
           .input("userId", sql.Int, userId)
           .query(`
@@ -505,18 +472,15 @@ export const eliminarUsuario = async (req, res) => {
             )
           `);
 
-        // 7. Eliminar personalizaciones del profesor
         await transaction.request()
           .input("userId", sql.Int, userId)
           .query("DELETE FROM Personalizacion_TB WHERE Usuario_ID_FK = @userId");
 
-        // 8. Eliminar vinculaciones a grupos
         await transaction.request()
           .input("userId", sql.Int, userId)
           .query("DELETE FROM GrupoVinculado_TB WHERE Usuario_ID_FK = @userId");
       }
 
-      // Finalmente, eliminar el usuario
       await transaction.request()
         .input("userId", sql.Int, userId)
         .query("DELETE FROM Usuario_TB WHERE Usuario_ID_PK = @userId");
@@ -538,24 +502,21 @@ export const eliminarUsuario = async (req, res) => {
 
   } catch (error) {
     console.error("Error al eliminar usuario:", error);
-    return res.status(500).json({ 
-      success: false, 
+    return res.status(500).json({
+      success: false,
       message: "Error al eliminar usuario",
-      error: error.message 
+      error: error.message
     });
   }
 };
 
-/**
- * Obtener información detallada de un usuario
- */
+// Obtener información detallada de un usuario
 export const obtenerInformacionUsuario = async (req, res) => {
   const { userId } = req.params;
 
   try {
     const pool = await poolPromise;
 
-    // 1. Obtener información básica del usuario
     const userResult = await pool.request()
       .input("userId", sql.Int, userId)
       .query(`
@@ -580,9 +541,7 @@ export const obtenerInformacionUsuario = async (req, res) => {
 
     const userInfo = userResult.recordset[0];
 
-    // 2. Obtener estadísticas según el rol
     if (userInfo.Rol === "Estudiante") {
-      // Partidas jugadas
       const partidasResult = await pool.request()
         .input("userId", sql.Int, userId)
         .query(`
@@ -594,7 +553,6 @@ export const obtenerInformacionUsuario = async (req, res) => {
 
       userInfo.totalPartidas = partidasResult.recordset[0].totalPartidas || 0;
 
-      // Cursos vinculados
       const cursosResult = await pool.request()
         .input("userId", sql.Int, userId)
         .query(`
@@ -611,7 +569,6 @@ export const obtenerInformacionUsuario = async (req, res) => {
       userInfo.cursos = cursosResult.recordset.map(c => `${c.Codigo_Curso}-${c.Nombre_Curso} G${c.Codigo_Grupo}`).join(", ");
 
     } else if (userInfo.Rol === "Profesor") {
-      // Personalizaciones activas
       const personalizacionesResult = await pool.request()
         .input("userId", sql.Int, userId)
         .query(`
@@ -622,7 +579,6 @@ export const obtenerInformacionUsuario = async (req, res) => {
 
       userInfo.totalPersonalizaciones = personalizacionesResult.recordset[0].totalPersonalizaciones || 0;
 
-      // Cursos que imparte
       const cursosResult = await pool.request()
         .input("userId", sql.Int, userId)
         .query(`
@@ -638,7 +594,6 @@ export const obtenerInformacionUsuario = async (req, res) => {
 
       userInfo.cursos = cursosResult.recordset.map(c => `${c.Codigo_Curso}-${c.Nombre_Curso} G${c.Codigo_Grupo}`).join(", ");
 
-      // Estudiantes vinculados
       const estudiantesResult = await pool.request()
         .input("userId", sql.Int, userId)
         .query(`
@@ -664,7 +619,6 @@ export const obtenerInformacionUsuario = async (req, res) => {
       userInfo.estudiantes = estudiantesResult.recordset;
     }
 
-    // 3. Obtener bitácora del usuario
     const bitacoraResult = await pool.request()
       .input("userId", sql.Int, userId)
       .query(`
@@ -695,38 +649,34 @@ export const obtenerInformacionUsuario = async (req, res) => {
   }
 };
 
-/**
- * Desactivar un usuario
- */
+// Activar/Desactivar un usuario
 export const desactivarUsuario = async (req, res) => {
   const { userId } = req.params;
 
   if (isNaN(userId)) {
-    return res.status(400).json({ 
-      success: false, 
-      message: "ID de usuario debe ser un número válido" 
+    return res.status(400).json({
+      success: false,
+      message: "ID de usuario debe ser un número válido"
     });
   }
 
   try {
     const pool = await poolPromise;
 
-    // 1. Verificar que el usuario existe
     const userCheck = await pool.request()
       .input("userId", sql.Int, userId)
       .query("SELECT Estado FROM Usuario_TB WHERE Usuario_ID_PK = @userId");
 
     if (userCheck.recordset.length === 0) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "Usuario no encontrado" 
+      return res.status(404).json({
+        success: false,
+        message: "Usuario no encontrado"
       });
     }
 
     const currentStatus = userCheck.recordset[0].Estado;
-    const newStatus = currentStatus ? 0 : 1; // Alternar estado
+    const newStatus = currentStatus ? 0 : 1;
 
-    // 2. Actualizar estado
     await pool.request()
       .input("userId", sql.Int, userId)
       .input("newStatus", sql.Bit, newStatus)
@@ -742,24 +692,21 @@ export const desactivarUsuario = async (req, res) => {
 
   } catch (error) {
     console.error("Error al cambiar estado del usuario:", error);
-    return res.status(500).json({ 
-      success: false, 
+    return res.status(500).json({
+      success: false,
       message: "Error al cambiar estado del usuario",
-      error: error.message 
+      error: error.message
     });
   }
 };
 
-/**
- * Eliminar un registro de historial (resultados)
- */
+// Eliminar un registro de historial
 export const eliminarHistorial = async (req, res) => {
   const { historialId } = req.params;
 
   try {
     const pool = await poolPromise;
 
-    // Verificar que el historial existe
     const historialCheck = await pool.request()
       .input("historialId", sql.Int, historialId)
       .query("SELECT * FROM Resultados_TB WHERE Resultados_ID_PK = @historialId");
@@ -768,7 +715,6 @@ export const eliminarHistorial = async (req, res) => {
       return res.status(404).json({ success: false, message: "Registro de historial no encontrado" });
     }
 
-    // Eliminar el registro
     await pool.request()
       .input("historialId", sql.Int, historialId)
       .query("DELETE FROM Resultados_TB WHERE Resultados_ID_PK = @historialId");
@@ -786,16 +732,13 @@ export const eliminarHistorial = async (req, res) => {
   }
 };
 
-/**
- * Eliminar un registro de bitácora
- */
+// Eliminar un registro de bitácora
 export const eliminarLog = async (req, res) => {
   const { logId } = req.params;
 
   try {
     const pool = await poolPromise;
 
-    // Verificar que el log existe
     const logCheck = await pool.request()
       .input("logId", sql.Int, logId)
       .query("SELECT * FROM Bitacora_TB WHERE Bitacora_ID_PK = @logId");
@@ -804,7 +747,6 @@ export const eliminarLog = async (req, res) => {
       return res.status(404).json({ success: false, message: "Registro de bitácora no encontrado" });
     }
 
-    // Eliminar el registro
     await pool.request()
       .input("logId", sql.Int, logId)
       .query("DELETE FROM Bitacora_TB WHERE Bitacora_ID_PK = @logId");
@@ -822,28 +764,22 @@ export const eliminarLog = async (req, res) => {
   }
 };
 
-/**
- * Eliminar todas las personalizaciones
- */
+// Eliminar todas las personalizaciones y sus dependencias
 export const eliminarTodasPersonalizaciones = async (req, res) => {
   try {
     const pool = await poolPromise;
 
-    // Iniciar transacción
     const transaction = new sql.Transaction(await pool.connect());
     await transaction.begin();
 
     try {
-      // 1. Eliminar configuraciones de juego
       await transaction.request().query("DELETE FROM ConfiguracionJuego_TB");
 
-      // 2. Eliminar partidas relacionadas
       await transaction.request().query(`
         DELETE FROM Partida_TB 
         WHERE Personalizacion_ID_FK IS NOT NULL
       `);
 
-      // 3. Eliminar personalizaciones
       await transaction.request().query("DELETE FROM Personalizacion_TB");
 
       await transaction.commit();
@@ -866,14 +802,11 @@ export const eliminarTodasPersonalizaciones = async (req, res) => {
   }
 };
 
-/**
- * Eliminar toda la bitácora
- */
+// Eliminar toda la bitácora
 export const eliminarTodaBitacora = async (req, res) => {
   try {
     const pool = await poolPromise;
 
-    // Eliminar todos los registros
     await pool.request().query("DELETE FROM Bitacora_TB");
 
     await GenerarBitacora(req.user.id, "Toda la bitácora eliminada en modo debug", null);
@@ -889,28 +822,21 @@ export const eliminarTodaBitacora = async (req, res) => {
   }
 };
 
-/**
- * Eliminar todo el historial de partidas
- */
+// Eliminar todo el historial de partidas y sus dependencias
 export const eliminarTodoHistorial = async (req, res) => {
   try {
     const pool = await poolPromise;
 
-    // Iniciar transacción
     const transaction = new sql.Transaction(await pool.connect());
     await transaction.begin();
 
     try {
-      // 1. Eliminar logros de usuarios
       await transaction.request().query("DELETE FROM Usuario_Logros_TB");
 
-      // 2. Eliminar resultados
       await transaction.request().query("DELETE FROM Resultados_TB");
 
-      // 3. Eliminar participantes
       await transaction.request().query("DELETE FROM Participantes_TB");
 
-      // 4. Eliminar partidas
       await transaction.request().query("DELETE FROM Partida_TB");
 
       await transaction.commit();
@@ -933,14 +859,11 @@ export const eliminarTodoHistorial = async (req, res) => {
   }
 };
 
-/**
- * Eliminar todos los estudiantes
- */
+// Eliminar todos los estudiantes y sus dependencias
 export const eliminarTodosEstudiantes = async (req, res) => {
   try {
     const pool = await poolPromise;
 
-    // Obtener ID del rol Estudiante
     const rolResult = await pool.request()
       .query("SELECT Rol_ID_PK FROM Rol_TB WHERE Rol = 'Estudiante'");
 
@@ -950,12 +873,10 @@ export const eliminarTodosEstudiantes = async (req, res) => {
 
     const rolId = rolResult.recordset[0].Rol_ID_PK;
 
-    // Iniciar transacción
     const transaction = new sql.Transaction(await pool.connect());
     await transaction.begin();
 
     try {
-      // 1. Obtener IDs de estudiantes
       const estudiantesResult = await transaction.request()
         .input("rolId", sql.Int, rolId)
         .query("SELECT Usuario_ID_PK FROM Usuario_TB WHERE Rol_ID_FK = @rolId");
@@ -963,21 +884,18 @@ export const eliminarTodosEstudiantes = async (req, res) => {
       const estudiantesIds = estudiantesResult.recordset.map(e => e.Usuario_ID_PK);
 
       if (estudiantesIds.length > 0) {
-        // 2. Eliminar participaciones
-         await transaction.request()
+        await transaction.request()
           .query(`
             DELETE FROM Participantes_TB 
             WHERE Usuario_ID_FK IN (${estudiantesIds.join(",")})
           `);
 
-        // 2. Eliminar logros
         await transaction.request()
           .query(`
             DELETE FROM Usuario_Logros_TB 
             WHERE Usuario_ID_FK IN (${estudiantesIds.join(",")})
           `);
 
-        // 3. Eliminar vinculaciones a grupos
         await transaction.request()
           .query(`
             DELETE FROM GrupoVinculado_TB 
@@ -985,7 +903,6 @@ export const eliminarTodosEstudiantes = async (req, res) => {
           `);
       }
 
-      // 6. Finalmente, eliminar los estudiantes
       await transaction.request()
         .input("rolId", sql.Int, rolId)
         .query("DELETE FROM Usuario_TB WHERE Rol_ID_FK = @rolId");
@@ -1010,11 +927,11 @@ export const eliminarTodosEstudiantes = async (req, res) => {
   }
 };
 
+// Eliminar todos los profesores y sus dependencias
 export const eliminarTodosProfesores = async (req, res) => {
   try {
     const pool = await poolPromise;
 
-    // Obtener ID del rol Profesor
     const rolResult = await pool.request()
       .query("SELECT Rol_ID_PK FROM Rol_TB WHERE Rol = 'Profesor'");
 
@@ -1024,12 +941,10 @@ export const eliminarTodosProfesores = async (req, res) => {
 
     const rolId = rolResult.recordset[0].Rol_ID_PK;
 
-    // Iniciar transacción
     const transaction = new sql.Transaction(await pool.connect());
     await transaction.begin();
 
     try {
-      // 1. Obtener IDs de profesores
       const profesoresResult = await transaction.request()
         .input("rolId", sql.Int, rolId)
         .query("SELECT Usuario_ID_PK FROM Usuario_TB WHERE Rol_ID_FK = @rolId");
@@ -1037,7 +952,6 @@ export const eliminarTodosProfesores = async (req, res) => {
       const profesoresIds = profesoresResult.recordset.map(p => p.Usuario_ID_PK);
 
       if (profesoresIds.length > 0) {
-        // 2. Obtener partidas de estos profesores
         const partidasResult = await transaction.request()
           .query(`
             SELECT Partida_ID_PK 
@@ -1048,21 +962,18 @@ export const eliminarTodosProfesores = async (req, res) => {
         const partidasIds = partidasResult.recordset.map(p => p.Partida_ID_PK);
 
         if (partidasIds.length > 0) {
-          // 3. Eliminar participantes de esas partidas
           await transaction.request()
             .query(`
               DELETE FROM Participantes_TB 
               WHERE Partida_ID_FK IN (${partidasIds.join(",")})
             `);
 
-          // 4. Eliminar resultados de esas partidas
           await transaction.request()
             .query(`
               DELETE FROM Resultados_TB 
               WHERE Partida_ID_FK IN (${partidasIds.join(",")})
             `);
 
-          // 5. Eliminar logros de esas partidas
           await transaction.request()
             .query(`
               DELETE FROM Usuario_Logros_TB 
@@ -1070,14 +981,12 @@ export const eliminarTodosProfesores = async (req, res) => {
             `);
         }
 
-        // 6. Eliminar las partidas de los profesores
         await transaction.request()
           .query(`
             DELETE FROM Partida_TB 
             WHERE Profesor_ID_FK IN (${profesoresIds.join(",")})
           `);
 
-        // 7. Eliminar personalizaciones de los profesores
         await transaction.request()
           .query(`
             DELETE FROM ConfiguracionJuego_TB 
@@ -1094,7 +1003,6 @@ export const eliminarTodosProfesores = async (req, res) => {
             WHERE Usuario_ID_FK IN (${profesoresIds.join(",")})
           `);
 
-        // 8. Eliminar vinculaciones a grupos
         await transaction.request()
           .query(`
             DELETE FROM GrupoVinculado_TB 
@@ -1102,7 +1010,6 @@ export const eliminarTodosProfesores = async (req, res) => {
           `);
       }
 
-      // 9. Finalmente, eliminar los profesores
       await transaction.request()
         .input("rolId", sql.Int, rolId)
         .query("DELETE FROM Usuario_TB WHERE Rol_ID_FK = @rolId");
@@ -1127,15 +1034,11 @@ export const eliminarTodosProfesores = async (req, res) => {
   }
 };
 
-// debugController.js - Métodos adicionales
-
-/**
- * Obtener todos los usuarios del sistema (solo para administradores)
- */
+// Obtener todos los usuarios con sus roles, géneros y cursos
 export const getAllUsers = async (req, res) => {
   try {
     const pool = await poolPromise;
-    
+
     const result = await pool.request().query(`
       SELECT 
         u.Usuario_ID_PK as id,
@@ -1167,25 +1070,22 @@ export const getAllUsers = async (req, res) => {
 
   } catch (error) {
     console.error("Error al obtener todos los usuarios:", error);
-    return res.status(500).json({ 
-      success: false, 
+    return res.status(500).json({
+      success: false,
       message: "Error al obtener los usuarios",
-      error: error.message 
+      error: error.message
     });
   }
 };
 
-/**
- * Obtener toda la bitácora del sistema (solo para administradores)
- */
+// Obtener todos los logs de la bitácora (solo para administradores)
 export const getFullBitacora = async (req, res) => {
   try {
     const { limit = 1000, page = 1 } = req.query;
     const offset = (page - 1) * limit;
-    
+
     const pool = await poolPromise;
-    
-    // Consulta principal con paginación
+
     const result = await pool.request()
       .input('limit', sql.Int, limit)
       .input('offset', sql.Int, offset)
@@ -1205,11 +1105,10 @@ export const getFullBitacora = async (req, res) => {
         OFFSET @offset ROWS
         FETCH NEXT @limit ROWS ONLY
       `);
-    
-    // Consulta para el total de registros
+
     const countResult = await pool.request()
       .query('SELECT COUNT(*) as total FROM Bitacora_TB');
-    
+
     return res.status(200).json({
       success: true,
       total: countResult.recordset[0].total,
@@ -1217,31 +1116,28 @@ export const getFullBitacora = async (req, res) => {
       limit: parseInt(limit),
       logs: result.recordset.map(log => ({
         ...log,
-        Fecha: new Date(log.Fecha).toISOString() // Asegurar formato de fecha
+        Fecha: new Date(log.Fecha).toISOString() 
       }))
     });
 
   } catch (error) {
     console.error("Error al obtener la bitácora:", error);
-    return res.status(500).json({ 
-      success: false, 
+    return res.status(500).json({
+      success: false,
       message: "Error al obtener la bitácora",
-      error: error.message 
+      error: error.message
     });
   }
 };
 
-/**
- * Obtener todos los logs de logros de usuarios (solo para administradores)
- */
+// Obtener todos los logs de logros obtenidos por los usuarios
 export const getAllAchievementLogs = async (req, res) => {
   try {
     const { limit = 1000, page = 1 } = req.query;
     const offset = (page - 1) * limit;
-    
+
     const pool = await poolPromise;
-    
-    // Consulta principal con paginación
+
     const result = await pool.request()
       .input('limit', sql.Int, limit)
       .input('offset', sql.Int, offset)
@@ -1264,11 +1160,10 @@ export const getAllAchievementLogs = async (req, res) => {
         OFFSET @offset ROWS
         FETCH NEXT @limit ROWS ONLY
       `);
-    
-    // Consulta para el total de registros
+
     const countResult = await pool.request()
       .query('SELECT COUNT(*) as total FROM Usuario_Logros_TB');
-    
+
     return res.status(200).json({
       success: true,
       total: countResult.recordset[0].total,
@@ -1279,17 +1174,15 @@ export const getAllAchievementLogs = async (req, res) => {
 
   } catch (error) {
     console.error("Error al obtener los logs de logros:", error);
-    return res.status(500).json({ 
-      success: false, 
+    return res.status(500).json({
+      success: false,
       message: "Error al obtener los logs de logros",
-      error: error.message 
+      error: error.message
     });
   }
 };
 
-/**
- * Obtener todos los grupos vinculados a un usuario
- */
+// Obtener los grupos vinculados a un usuario
 export const obtenerGruposUsuario = async (req, res) => {
   const { userId } = req.params;
 
@@ -1311,7 +1204,6 @@ export const obtenerGruposUsuario = async (req, res) => {
         ORDER BY cc.Nombre_Curso, gc.Codigo_Grupo
       `);
 
-    // Formatear el nombre del grupo como [Codigo]-[nombre] G[Numero]
     const grupos = result.recordset.map(grupo => ({
       id: grupo.id,
       nombreCompleto: `${grupo.codigo}-${grupo.nombre} G${grupo.grupo}`,
@@ -1328,37 +1220,33 @@ export const obtenerGruposUsuario = async (req, res) => {
 
   } catch (error) {
     console.error("Error al obtener grupos del usuario:", error);
-    return res.status(500).json({ 
-      success: false, 
+    return res.status(500).json({
+      success: false,
       message: "Error al obtener grupos del usuario",
-      error: error.message 
+      error: error.message
     });
   }
 };
 
-/**
- * Desvincular un grupo de un usuario
- */
+// Desvincular un grupo de un usuario
 export const desvincularGrupoUsuario = async (req, res) => {
   const { userId, grupoId } = req.params;
 
   try {
     const pool = await poolPromise;
 
-    // Verificar que la vinculación existe
     const vinculacionCheck = await pool.request()
       .input("userId", sql.Int, userId)
       .input("grupoId", sql.Int, grupoId)
       .query("SELECT * FROM GrupoVinculado_TB WHERE Usuario_ID_FK = @userId AND GrupoCurso_ID_FK = @grupoId");
 
     if (vinculacionCheck.recordset.length === 0) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "Vinculación no encontrada" 
+      return res.status(404).json({
+        success: false,
+        message: "Vinculación no encontrada"
       });
     }
 
-    // Eliminar la vinculación
     await pool.request()
       .input("userId", sql.Int, userId)
       .input("grupoId", sql.Int, grupoId)
@@ -1373,24 +1261,21 @@ export const desvincularGrupoUsuario = async (req, res) => {
 
   } catch (error) {
     console.error("Error al desvincular grupo:", error);
-    return res.status(500).json({ 
-      success: false, 
+    return res.status(500).json({
+      success: false,
       message: "Error al desvincular grupo",
-      error: error.message 
+      error: error.message
     });
   }
 };
 
-/**
- * Vincular un grupo a un usuario
- */
+// Vincular un grupo a un usuario
 export const agregarGrupoUsuario = async (req, res) => {
   const { userId, grupoId } = req.params;
 
   try {
     const pool = await poolPromise;
 
-    // Verificar que el usuario existe
     const userCheck = await pool.request()
       .input("userId", sql.Int, userId)
       .query(`
@@ -1401,41 +1286,38 @@ export const agregarGrupoUsuario = async (req, res) => {
       `);
 
     if (userCheck.recordset.length === 0) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "Usuario no encontrado" 
+      return res.status(404).json({
+        success: false,
+        message: "Usuario no encontrado"
       });
     }
 
     const user = userCheck.recordset[0];
     const userRole = user.Rol;
 
-    // Verificar que el grupo existe
     const grupoCheck = await pool.request()
       .input("grupoId", sql.Int, grupoId)
       .query("SELECT * FROM GrupoCurso_TB WHERE GrupoCurso_ID_PK = @grupoId");
 
     if (grupoCheck.recordset.length === 0) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "Grupo no encontrado" 
+      return res.status(404).json({
+        success: false,
+        message: "Grupo no encontrado"
       });
     }
 
-    // Verificar que no esté ya vinculado
     const vinculacionCheck = await pool.request()
       .input("userId", sql.Int, userId)
       .input("grupoId", sql.Int, grupoId)
       .query("SELECT * FROM GrupoVinculado_TB WHERE Usuario_ID_FK = @userId AND GrupoCurso_ID_FK = @grupoId");
 
     if (vinculacionCheck.recordset.length > 0) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "El usuario ya está vinculado a este grupo" 
+      return res.status(400).json({
+        success: false,
+        message: "El usuario ya está vinculado a este grupo"
       });
     }
 
-    // Si el usuario es profesor, verificar que no haya otro profesor en el grupo
     if (userRole === 'Profesor') {
       const profesorEnGrupoCheck = await pool.request()
         .input("grupoId", sql.Int, grupoId)
@@ -1448,14 +1330,13 @@ export const agregarGrupoUsuario = async (req, res) => {
         `);
 
       if (profesorEnGrupoCheck.recordset.length > 0) {
-        return res.status(400).json({ 
-          success: false, 
-          message: "Ya existe un profesor vinculado a este grupo" 
+        return res.status(400).json({
+          success: false,
+          message: "Ya existe un profesor vinculado a este grupo"
         });
       }
     }
 
-    // Crear la vinculación
     await pool.request()
       .input("userId", sql.Int, userId)
       .input("grupoId", sql.Int, grupoId)
@@ -1473,43 +1354,38 @@ export const agregarGrupoUsuario = async (req, res) => {
 
   } catch (error) {
     console.error("Error al vincular grupo:", error);
-    return res.status(500).json({ 
-      success: false, 
+    return res.status(500).json({
+      success: false,
       message: "Error al vincular grupo",
-      error: error.message 
+      error: error.message
     });
   }
 };
 
-/**
- * Desvincular todos los usuarios de un grupo
- */
+// Desvincular todos los usuarios de un grupo
 export const desvincularUsuariosGrupo = async (req, res) => {
   const { grupoId } = req.params;
 
   try {
     const pool = await poolPromise;
 
-    // Verificar que el grupo existe
     const grupoCheck = await pool.request()
       .input("grupoId", sql.Int, grupoId)
       .query("SELECT * FROM GrupoCurso_TB WHERE GrupoCurso_ID_PK = @grupoId");
 
     if (grupoCheck.recordset.length === 0) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "Grupo no encontrado" 
+      return res.status(404).json({
+        success: false,
+        message: "Grupo no encontrado"
       });
     }
 
-    // Obtener cantidad de vinculaciones a eliminar
     const countResult = await pool.request()
       .input("grupoId", sql.Int, grupoId)
       .query("SELECT COUNT(*) as total FROM GrupoVinculado_TB WHERE GrupoCurso_ID_FK = @grupoId");
 
     const totalVinculaciones = countResult.recordset[0].total;
 
-    // Eliminar todas las vinculaciones
     await pool.request()
       .input("grupoId", sql.Int, grupoId)
       .query("DELETE FROM GrupoVinculado_TB WHERE GrupoCurso_ID_FK = @grupoId");
@@ -1523,22 +1399,19 @@ export const desvincularUsuariosGrupo = async (req, res) => {
 
   } catch (error) {
     console.error("Error al desvincular usuarios del grupo:", error);
-    return res.status(500).json({ 
-      success: false, 
+    return res.status(500).json({
+      success: false,
       message: "Error al desvincular usuarios del grupo",
-      error: error.message 
+      error: error.message
     });
   }
 };
 
-/**
- * Obtener todos los grupos con sus usuarios vinculados
- */
+// Obtener todos los grupos con sus usuarios vinculados
 export const obtenerGruposConUsuarios = async (req, res) => {
   try {
     const pool = await poolPromise;
 
-    // Obtener todos los grupos distintos
     const gruposResult = await pool.request().query(`
       SELECT DISTINCT
         gc.GrupoCurso_ID_PK as id,
@@ -1551,7 +1424,6 @@ export const obtenerGruposConUsuarios = async (req, res) => {
       ORDER BY cc.Nombre_Curso, gc.Codigo_Grupo
     `);
 
-    // Para cada grupo, obtener los usuarios vinculados
     const gruposConUsuarios = await Promise.all(gruposResult.recordset.map(async grupo => {
       const usuariosResult = await pool.request()
         .input("grupoId", sql.Int, grupo.id)
@@ -1588,24 +1460,21 @@ export const obtenerGruposConUsuarios = async (req, res) => {
 
   } catch (error) {
     console.error("Error al obtener grupos con usuarios:", error);
-    return res.status(500).json({ 
-      success: false, 
+    return res.status(500).json({
+      success: false,
       message: "Error al obtener grupos con usuarios",
-      error: error.message 
+      error: error.message
     });
   }
 };
 
-/**
- * Eliminar todas las personalizaciones de un profesor y sus dependencias
- */
+//  Eliminar todas las personalizaciones de un profesor y sus dependencias
 export const eliminarPersonalizacionesProfesor = async (req, res) => {
   const { profesorId } = req.params;
 
   try {
     const pool = await poolPromise;
 
-    // Verificar que el usuario es profesor
     const profesorCheck = await pool.request()
       .input("profesorId", sql.Int, profesorId)
       .query(`
@@ -1616,18 +1485,16 @@ export const eliminarPersonalizacionesProfesor = async (req, res) => {
       `);
 
     if (profesorCheck.recordset.length === 0) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "Profesor no encontrado o no es un profesor" 
+      return res.status(404).json({
+        success: false,
+        message: "Profesor no encontrado o no es un profesor"
       });
     }
 
-    // Iniciar transacción
     const transaction = new sql.Transaction(await pool.connect());
     await transaction.begin();
 
     try {
-      // 1. Obtener todas las personalizaciones del profesor
       const personalizacionesResult = await transaction.request()
         .input("profesorId", sql.Int, profesorId)
         .query("SELECT Personalizacion_ID_PK FROM Personalizacion_TB WHERE Usuario_ID_FK = @profesorId");
@@ -1635,7 +1502,6 @@ export const eliminarPersonalizacionesProfesor = async (req, res) => {
       const personalizacionesIds = personalizacionesResult.recordset.map(p => p.Personalizacion_ID_PK);
 
       if (personalizacionesIds.length > 0) {
-        // 2. Obtener partidas vinculadas a estas personalizaciones
         const partidasResult = await transaction.request()
           .query(`
             SELECT Partida_ID_PK 
@@ -1646,21 +1512,18 @@ export const eliminarPersonalizacionesProfesor = async (req, res) => {
         const partidasIds = partidasResult.recordset.map(p => p.Partida_ID_PK);
 
         if (partidasIds.length > 0) {
-          // 3. Eliminar participantes de esas partidas
           await transaction.request()
             .query(`
               DELETE FROM Participantes_TB 
               WHERE Partida_ID_FK IN (${partidasIds.join(",")})
             `);
 
-          // 4. Eliminar resultados de esas partidas
           await transaction.request()
             .query(`
               DELETE FROM Resultados_TB 
               WHERE Partida_ID_FK IN (${partidasIds.join(",")})
             `);
 
-          // 5. Eliminar logros de esas partidas
           await transaction.request()
             .query(`
               DELETE FROM Usuario_Logros_TB 
@@ -1668,14 +1531,12 @@ export const eliminarPersonalizacionesProfesor = async (req, res) => {
             `);
         }
 
-        // 6. Eliminar las partidas vinculadas
         await transaction.request()
           .query(`
             DELETE FROM Partida_TB 
             WHERE Personalizacion_ID_FK IN (${personalizacionesIds.join(",")})
           `);
 
-        // 7. Eliminar configuraciones de juego
         await transaction.request()
           .query(`
             DELETE FROM ConfiguracionJuego_TB 
@@ -1683,7 +1544,6 @@ export const eliminarPersonalizacionesProfesor = async (req, res) => {
           `);
       }
 
-      // 8. Eliminar las personalizaciones
       await transaction.request()
         .input("profesorId", sql.Int, profesorId)
         .query("DELETE FROM Personalizacion_TB WHERE Usuario_ID_FK = @profesorId");
@@ -1704,24 +1564,21 @@ export const eliminarPersonalizacionesProfesor = async (req, res) => {
 
   } catch (error) {
     console.error("Error al eliminar personalizaciones del profesor:", error);
-    return res.status(500).json({ 
-      success: false, 
+    return res.status(500).json({
+      success: false,
       message: "Error al eliminar personalizaciones del profesor",
-      error: error.message 
+      error: error.message
     });
   }
 };
 
-/**
- * Eliminar todas las partidas de un profesor y sus dependencias
- */
+// Eliminar todas las partidas de un profesor y sus dependencias
 export const eliminarPartidasProfesor = async (req, res) => {
   const { profesorId } = req.params;
 
   try {
     const pool = await poolPromise;
 
-    // Verificar que el usuario es profesor
     const profesorCheck = await pool.request()
       .input("profesorId", sql.Int, profesorId)
       .query(`
@@ -1732,18 +1589,16 @@ export const eliminarPartidasProfesor = async (req, res) => {
       `);
 
     if (profesorCheck.recordset.length === 0) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "Profesor no encontrado o no es un profesor" 
+      return res.status(404).json({
+        success: false,
+        message: "Profesor no encontrado o no es un profesor"
       });
     }
 
-    // Iniciar transacción
     const transaction = new sql.Transaction(await pool.connect());
     await transaction.begin();
 
     try {
-      // 1. Obtener todas las partidas del profesor
       const partidasResult = await transaction.request()
         .input("profesorId", sql.Int, profesorId)
         .query("SELECT Partida_ID_PK FROM Partida_TB WHERE Profesor_ID_FK = @profesorId");
@@ -1751,21 +1606,18 @@ export const eliminarPartidasProfesor = async (req, res) => {
       const partidasIds = partidasResult.recordset.map(p => p.Partida_ID_PK);
 
       if (partidasIds.length > 0) {
-        // 2. Eliminar participantes de esas partidas
         await transaction.request()
           .query(`
             DELETE FROM Participantes_TB 
             WHERE Partida_ID_FK IN (${partidasIds.join(",")})
           `);
 
-        // 3. Eliminar resultados de esas partidas
         await transaction.request()
           .query(`
             DELETE FROM Resultados_TB 
             WHERE Partida_ID_FK IN (${partidasIds.join(",")})
           `);
 
-        // 4. Eliminar logros de esas partidas
         await transaction.request()
           .query(`
             DELETE FROM Usuario_Logros_TB 
@@ -1773,7 +1625,6 @@ export const eliminarPartidasProfesor = async (req, res) => {
           `);
       }
 
-      // 5. Eliminar las partidas
       await transaction.request()
         .input("profesorId", sql.Int, profesorId)
         .query("DELETE FROM Partida_TB WHERE Profesor_ID_FK = @profesorId");
@@ -1794,24 +1645,21 @@ export const eliminarPartidasProfesor = async (req, res) => {
 
   } catch (error) {
     console.error("Error al eliminar partidas del profesor:", error);
-    return res.status(500).json({ 
-      success: false, 
+    return res.status(500).json({
+      success: false,
       message: "Error al eliminar partidas del profesor",
-      error: error.message 
+      error: error.message
     });
   }
 };
 
-/**
- * Eliminar todos los logros de un estudiante
- */
+// Reiniciar todos los logros de un estudiante
 export const reiniciarLogrosEstudiante = async (req, res) => {
   const { estudianteId } = req.params;
 
   try {
     const pool = await poolPromise;
 
-    // Verificar que el usuario es estudiante
     const estudianteCheck = await pool.request()
       .input("estudianteId", sql.Int, estudianteId)
       .query(`
@@ -1822,13 +1670,12 @@ export const reiniciarLogrosEstudiante = async (req, res) => {
       `);
 
     if (estudianteCheck.recordset.length === 0) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "Estudiante no encontrado o no es un estudiante" 
+      return res.status(404).json({
+        success: false,
+        message: "Estudiante no encontrado o no es un estudiante"
       });
     }
 
-    // Eliminar todos los logros del estudiante
     const result = await pool.request()
       .input("estudianteId", sql.Int, estudianteId)
       .query("DELETE FROM Usuario_Logros_TB WHERE Usuario_ID_FK = @estudianteId");
@@ -1843,17 +1690,15 @@ export const reiniciarLogrosEstudiante = async (req, res) => {
 
   } catch (error) {
     console.error("Error al reiniciar logros del estudiante:", error);
-    return res.status(500).json({ 
-      success: false, 
+    return res.status(500).json({
+      success: false,
       message: "Error al reiniciar logros del estudiante",
-      error: error.message 
+      error: error.message
     });
   }
 };
 
-/**
- * Obtener todos los grupos del sistema
- */
+// Obtener todos los grupos disponibles en el sistema
 export const obtenerTodosGrupos = async (req, res) => {
   try {
     const pool = await poolPromise;
@@ -1876,7 +1721,6 @@ export const obtenerTodosGrupos = async (req, res) => {
       ORDER BY cc.Nombre_Curso, gc.Codigo_Grupo
     `);
 
-    // Formatear el nombre del grupo como [Codigo]-[nombre] G[Numero]
     const grupos = result.recordset.map(grupo => ({
       ...grupo,
       nombreCompleto: `${grupo.codigo}-${grupo.nombre} G${grupo.grupo}`
@@ -1892,14 +1736,15 @@ export const obtenerTodosGrupos = async (req, res) => {
 
   } catch (error) {
     console.error("Error al obtener todos los grupos:", error);
-    return res.status(500).json({ 
-      success: false, 
+    return res.status(500).json({
+      success: false,
       message: "Error al obtener todos los grupos",
-      error: error.message 
+      error: error.message
     });
   }
 };
 
+// Obtener el historial de partidas jugadas
 export const obtenerHistorialPartidas = async (req, res) => {
   try {
     const pool = await poolPromise;
@@ -1920,7 +1765,7 @@ export const obtenerHistorialPartidas = async (req, res) => {
 
     const historial = partidasResult.recordset.map(partida => ({
       id: partida.id_partida,
-      fecha: partida.fecha, // Usamos el string ISO ya convertido
+      fecha: partida.fecha, 
       profesor: partida.profesor,
       curso: partida.curso_grupo,
       total_estudiantes: partida.total_estudiantes
@@ -1931,14 +1776,15 @@ export const obtenerHistorialPartidas = async (req, res) => {
     return res.status(200).json(historial);
   } catch (error) {
     console.error("Error al obtener historial de partidas:", error);
-    return res.status(500).json({ 
-      success: false, 
+    return res.status(500).json({
+      success: false,
       message: "Error al obtener historial de partidas",
-      error: error.message 
+      error: error.message
     });
   }
 };
 
+// Obtener resultados detallados de una partida (solo para administradores)
 export const getResultsAdmin = async (req, res) => {
   const { partidaId } = req.params;
 
@@ -1948,7 +1794,6 @@ export const getResultsAdmin = async (req, res) => {
   try {
     const pool = await poolPromise;
 
-    // 1. Verificar si la partida existe
     const partidaQuery = await pool.request()
       .input('partidaId', sql.Int, partidaId)
       .query('SELECT * FROM Partida_TB WHERE Partida_ID_PK = @partidaId');
@@ -1961,7 +1806,6 @@ export const getResultsAdmin = async (req, res) => {
     const partida = partidaQuery.recordset[0];
     console.log(" Partida encontrada:", partida.Partida_ID_PK);
 
-    // 2. Obtener todos los equipos de la partida
     const equiposQuery = await pool.request()
       .input('partidaId', sql.Int, partidaId)
       .query(`
@@ -1973,7 +1817,6 @@ export const getResultsAdmin = async (req, res) => {
 
     const equipos = equiposQuery.recordset.map(e => e.Equipo);
 
-    // 3. Obtener miembros por equipo
     const miembrosPorEquipo = await Promise.all(equipos.map(async equipo => {
       const miembrosQuery = await pool.request()
         .input('partidaId', sql.Int, partidaId)
@@ -1987,7 +1830,6 @@ export const getResultsAdmin = async (req, res) => {
       return { equipo, miembros: miembrosQuery.recordset };
     }));
 
-    // 4. Obtener resultados por equipo
     const resultadosPorEquipo = await Promise.all(equipos.map(async equipo => {
       const resultadosQuery = await pool.request()
         .input('partidaId', sql.Int, partidaId)
@@ -2000,7 +1842,6 @@ export const getResultsAdmin = async (req, res) => {
       return { equipo, resultados: resultadosQuery.recordset };
     }));
 
-    // 5. Obtener logros por equipo (usando el primer miembro como referencia)
     const logrosPorEquipo = {};
     for (const equipo of equipos) {
       const userQuery = await pool.request()
@@ -2032,7 +1873,7 @@ export const getResultsAdmin = async (req, res) => {
       }
     }
 
-    console.log("✅ Resultados para administrador obtenidos correctamente");
+    console.log(" Resultados para administrador obtenidos correctamente");
     return res.status(200).json({
       partida,
       equipos: miembrosPorEquipo,
@@ -2041,7 +1882,7 @@ export const getResultsAdmin = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error al obtener resultados (admin):', error);
+    console.error(' Error al obtener resultados (admin):', error);
     return res.status(500).json({ message: 'Error al obtener resultados' });
   }
 };

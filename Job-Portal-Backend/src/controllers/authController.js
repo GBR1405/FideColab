@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { poolPromise } from "../config/db.js"; 
-import UserModel from "../models/userModel.js"; 
+import { poolPromise } from "../config/db.js";
+import UserModel from "../models/userModel.js";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 import sql from "mssql";
@@ -12,7 +12,6 @@ import { generatePath } from "react-router-dom";
 export const register = async (req, res) => {
   const { nombre, apellido1, apellido2, correo, contraseña, rolId, generoId } = req.body;
 
-  // Validar los campos requeridos
   if (!nombre || !apellido1 || !apellido2 || !correo || !contraseña || !rolId || !generoId) {
     return res.status(400).json({ success: false, message: "All fields are required" });
   }
@@ -20,7 +19,6 @@ export const register = async (req, res) => {
   try {
     const pool = await poolPromise;
 
-    // Verificar si el usuario ya existe
     const result = await pool.request()
       .input("correo", correo)
       .query("SELECT 1 FROM Usuario_TB WHERE Correo = @correo");
@@ -29,10 +27,8 @@ export const register = async (req, res) => {
       return res.status(400).json({ success: false, message: "User already exists" });
     }
 
-    // Encriptar la contraseña
     const hashedPassword = await bcrypt.hash(contraseña, 10);
 
-    // Insertar el nuevo usuario en la base de datos
     await pool.request()
       .input("nombre", nombre)
       .input("apellido1", apellido1)
@@ -76,7 +72,6 @@ export const login = async (req, res) => {
   try {
     const pool = await poolPromise;
 
-    // Buscar al usuario
     const result = await pool.request()
       .input("correo", sql.VarChar, correo)
       .query(`
@@ -98,24 +93,21 @@ export const login = async (req, res) => {
       return res.status(403).json({ success: false, message: "Su cuenta no está disponible. Contacte al administrador." });
     }
 
-    // Comparar contraseñas
     const isMatch = await bcrypt.compare(contraseña, user.Contraseña);
     if (!isMatch) {
       return res.status(401).json({ success: false, message: "Credenciales no validas" });
     }
 
-    // Generar el JWT
     const token = jwt.sign(
-      { id: user.Usuario_ID_PK, correo: user.Correo, rol: user.Rol }, 
-      process.env.JWT_SECRET, 
-      { expiresIn: '1d' } 
+      { id: user.Usuario_ID_PK, correo: user.Correo, rol: user.Rol },
+      process.env.JWT_SECRET,
+      { expiresIn: '1d' }
     );
 
-    // Enviar el JWT y el objeto de usuario al frontend
     return res.status(200).json({
       success: true,
       message: "Login successful",
-      token, // Envía el JWT
+      token,
       user: {
         id: user.Usuario_ID_PK,
         nombre: user.Nombre,
@@ -133,31 +125,28 @@ export const login = async (req, res) => {
   }
 };
 
-
-
 // Configuracion de Recuperar Contraseña
-dotenv.config(); 
+dotenv.config();
 
 const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST, 
-  port: 587, 
-  secure: false,  
+  host: process.env.EMAIL_HOST,
+  port: 587,
+  secure: false,
   auth: {
-    user: process.env.EMAIL_USER,  
-    pass: process.env.EMAIL_PASS,  
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
   tls: {
-    rejectUnauthorized: false, 
+    rejectUnauthorized: false,
   },
 });
-
 
 //Contraseña Olvidada
 export const forgotPassword = async (req, res) => {
   const { email } = req.body;
 
   try {
-    const pool = await poolPromise; 
+    const pool = await poolPromise;
 
     const result = await pool.request()
       .input("correo", email)
@@ -167,13 +156,11 @@ export const forgotPassword = async (req, res) => {
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
 
-    const user = result.recordset[0]; 
+    const user = result.recordset[0];
     const token = jwt.sign({ id: user.Usuario_ID_PK }, process.env.JWT_SECRET, { expiresIn: "15m" });
 
-    // Construir el enlace de recuperación
     const resetLink = `https://frontend-fidecolab.vercel.app/reset-password?token=${token}`;
 
-    // Enviar el correo
     await transporter.sendMail({
       from: `"Soporte" <${process.env.EMAIL_USER}>`,
       to: email,
@@ -256,8 +243,8 @@ export const forgotPassword = async (req, res) => {
       </body>
     </html>
   `,
-});
-    
+    });
+
 
     res.json({ message: "Correo enviado. Revisa tu bandeja de entrada." });
   } catch (error) {
@@ -266,30 +253,28 @@ export const forgotPassword = async (req, res) => {
   }
 };
 
+// Restablecer Contraseña
 export const resetPassword = async (req, res) => {
   const { token, newPassword } = req.body;
 
   try {
-    // Verificar el token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Realizar la consulta SQL para obtener el usuario
-    const pool = await poolPromise; // Esperar la conexión al pool de la base de datos
+
+    const pool = await poolPromise;
     const result = await pool.request()
-      .input('id', sql.Int, decoded.id)  // Asignar el id del token al parámetro
+      .input('id', sql.Int, decoded.id)
       .query('SELECT * FROM Usuario_TB WHERE Usuario_ID_PK = @id');
 
-    const user = result.recordset[0]; // Obtener el primer usuario encontrado
+    const user = result.recordset[0];
 
     if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
 
-    // Hashear la nueva contraseña
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Actualizar la contraseña en la base de datos
     await pool.request()
-      .input('id', sql.Int, user.Usuario_ID_PK) // ID del usuario
-      .input('newPassword', sql.NVarChar, hashedPassword) // Contraseña hasheada
+      .input('id', sql.Int, user.Usuario_ID_PK)
+      .input('newPassword', sql.NVarChar, hashedPassword)
       .query('UPDATE Usuario_TB SET Contraseña = @newPassword WHERE Usuario_ID_PK = @id');
 
     res.json({ message: "Contraseña actualizada con éxito" });
@@ -303,7 +288,6 @@ export const resetPassword = async (req, res) => {
 export const updateUser = async (req, res) => {
   const { generoId } = req.body;
 
-  // Asegurarse de que el middleware de autenticación asignó req.user
   if (!req.user || !req.user.id) {
     return res.status(401).json({ success: false, message: "Usuario no autenticado" });
   }
@@ -317,7 +301,6 @@ export const updateUser = async (req, res) => {
   try {
     const pool = await poolPromise;
 
-    // Verificar si el usuario existe por ID
     const userCheck = await pool.request()
       .input("id", sql.Int, userId)
       .query("SELECT * FROM Usuario_TB WHERE Usuario_ID_PK = @id");
@@ -326,7 +309,6 @@ export const updateUser = async (req, res) => {
       return res.status(404).json({ success: false, message: "Usuario no encontrado" });
     }
 
-    // Realizar la actualización
     await pool.request()
       .input("id", sql.Int, userId)
       .input("generoId", sql.Int, generoId)
@@ -344,28 +326,23 @@ export const updateUser = async (req, res) => {
   }
 };
 
-
-
- 
-// Función para obtener detalles completos del usuario
+// Obtener detalles completos del usuario
 export const getFullUserDetails = async (req, res) => {
   const token = req.headers.authorization?.split(' ')[2];
- 
+
   if (!token) {
     return res.status(401).json({ success: false, message: "Token not provided" });
   }
- 
+
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const usuarioId = decoded.usuarioId;
- 
+
     if (!usuarioId) {
       return res.status(401).json({ success: false, message: "Invalid token" });
     }
- 
+
     const pool = await poolPromise;
- 
-    // Obtener todos los detalles del usuario, incluyendo género, rol y grupo
     const result = await pool.request()
       .input("usuarioId", sql.Int, usuarioId)
       .query(`
@@ -385,20 +362,21 @@ export const getFullUserDetails = async (req, res) => {
 
       `);
 
-      console.log(result);
- 
+    console.log(result);
+
     if (result.recordset.length === 0) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
- 
+
     return res.status(200).json({ success: true, user: result.recordset[0] });
- 
+
   } catch (error) {
     console.error("Error fetching user details:", error);
     return res.status(500).json({ success: false, message: "Failed to retrieve user details" });
   }
 };
 
+// Actualizar la contraseña del usuario
 export const updatePassword = async (req, res) => {
   const { currentPassword, newPassword } = req.body;
   const userId = req.user.id;
@@ -410,7 +388,6 @@ export const updatePassword = async (req, res) => {
   try {
     const pool = await poolPromise;
 
-    // Obtener la contraseña actual desde la DB
     const result = await pool.request()
       .input("userId", sql.Int, userId)
       .query("SELECT Contraseña FROM Usuario_TB WHERE Usuario_ID_PK = @userId");
@@ -421,16 +398,13 @@ export const updatePassword = async (req, res) => {
 
     const storedHashedPassword = result.recordset[0].Contraseña;
 
-    // Comparar contraseña actual
     const isMatch = await bcrypt.compare(currentPassword, storedHashedPassword);
     if (!isMatch) {
       return res.status(401).json({ success: false, message: "La contraseña actual es incorrecta" });
     }
 
-    // Hashear la nueva contraseña
     const hashedNewPassword = await bcrypt.hash(newPassword, 10);
 
-    // Actualizar la nueva contraseña
     await pool.request()
       .input("userId", sql.Int, userId)
       .input("newPassword", sql.NVarChar, hashedNewPassword)
