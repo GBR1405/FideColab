@@ -5,10 +5,9 @@ const LoadingScreen = ({ loading }) => {
   const [fadeOut, setFadeOut] = useState(false);
 
   useEffect(() => {
-    // Si loading cambia a false, activamos el fade out
     if (!loading) {
       setFadeOut(true);
-      const timer = setTimeout(() => setFadeOut(false), 500); // Duración del fade out
+      const timer = setTimeout(() => setFadeOut(false), 500); 
       return () => clearTimeout(timer);
     }
   }, [loading]);

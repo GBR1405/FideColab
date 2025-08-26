@@ -8,19 +8,21 @@ import "../styles/login.css";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 
-const apiUrl = 'https://backend-fidecolab.onrender.com/api';
+const apiUrl = process.env.REACT_APP_API_URL;
 const secretKey = process.env.REACT_APP_SECRET_KEY;
 
 const frases = [
   "El éxito del equipo radica en la colaboración, no en la competencia",
   "Juntos alcanzamos más lejos que cualquier individuo solo",
-  "La innovación florece cuando las mentes colaboran"
+  "La innovación florece cuando las mentes colaboran",
+  "Las personas que están lo suficientemente locas como para creer que pueden cambiar el mundo son las que lo hacen",
 ];
 
 const autores = [
-  "— Anónimo",
+  "— Sebastian Barboza",
   "— Proverbio africano",
-  "— Margaret Mead"
+  "— Margaret Mead",
+  "— Sidney Ramirez"
 ];
 
 const Login = () => {

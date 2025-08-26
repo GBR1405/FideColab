@@ -34,7 +34,7 @@ const AdminProfessorCourses = () => {
     const handleDeselectTeacher = () => {
         setSelectedTeacher(null);
         setLinkedCourses([]);
-        applyRowSelectionEffect(null, 'teacher'); // Esto eliminará el resaltado
+        applyRowSelectionEffect(null, 'teacher'); 
     };
 
     const handleRowClick = (id, type) => {
@@ -46,9 +46,9 @@ const AdminProfessorCourses = () => {
         if (type === 'teacher') {
             setSelectedTeacher(prev => (prev === id ? null : id));
             if (id !== null) {
-                fetchLinkedCourses(id); // Obtener cursos vinculados al profesor seleccionado
+                fetchLinkedCourses(id); 
             } else {
-                setLinkedCourses([]); // Limpiar cursos vinculados si no hay profesor seleccionado
+                setLinkedCourses([]); 
             }
         } else if (type === 'course') {
             setSelectedCourse(prev => (prev === id ? null : id));
@@ -748,8 +748,6 @@ const AdminProfessorCourses = () => {
                             confirmButtonText: 'Aceptar',
                             confirmButtonColor: '#3e8e41'
                         }).then(() => {
-                           // Descargar PDF después del mensaje de éxito
-                           descargarPDF(pdfBase64, "Credenciales_Generadas");
                            window.location.reload(); // Recargar la página después
                         });
                         } else {
@@ -797,8 +795,6 @@ const AdminProfessorCourses = () => {
                             confirmButtonText: 'Aceptar',
                             confirmButtonColor: '#3e8e41'
                             }).then(() => {
-                               // Descargar PDF después del mensaje de éxito
-                               descargarPDF(pdfBase64, "Credenciales_Generadas");
                                window.location.reload(); // Recargar la página después
                             });
                      } else {

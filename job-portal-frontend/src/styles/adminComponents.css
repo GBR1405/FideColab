@@ -2483,3 +2483,492 @@ body, html {
   font-size: 3rem;
   margin-bottom: 15px;
 }
+
+.alert__add{
+    background-color: var(--white-smoke-clr);
+    width: 35vmax;
+    max-width: 35vmax;
+    height: 40vmax;
+    display: grid;
+    grid-template-rows: 10% 1fr 10%;
+
+    .swal2-html-container{
+        margin: 0;
+        padding: 0;
+        overflow: none;
+        width: 100%;
+        height: 100%;
+    }
+
+    .swal2-title{
+        padding: 0;
+        color: var(--blue-royal-clr);
+        align-self: center;
+        font-size: 2vmax;
+    }
+
+    .add__form{
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;        
+        align-items: center;
+        justify-content: space-evenly;
+    }
+
+    .add__input {
+        all: unset;
+        height: 10%;
+        width: 80%;
+        background-color: white;
+        box-shadow: 0px 4px 4px 1px rgba(0, 0, 0, 0.06);
+        border-radius: 5px;
+        cursor: text;
+        color: var(--primary-text-clr);
+        font-size: 0.9vmax;
+        font-weight: 500;
+        text-align: start;
+        padding-inline: 1vmax;
+    }
+
+    .add__select {
+        all: unset;
+        display: flex;
+        height: 10%;
+        width: 80%;
+        box-shadow: 0px 4px 4px 1px rgba(0, 0, 0, 0.06);
+        border-radius: 5px;
+        cursor: pointer;
+        color: var(--primary-text-clr);
+        font-size: 0.9vmax;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        text-align: start;
+        padding-inline: 1vmax;
+    }
+
+    .swal2-actions{
+        flex-wrap: none; 
+        margin: 0; 
+    }
+}
+
+.alert__unlink{
+    background-color: var(--white-smoke-clr);
+    width: 35vmax;
+    max-width: 35vmax;
+    height: 40vmax;
+    display: grid;
+    grid-template-rows: 10% 1fr 10%;
+    
+    .swal2-html-container{
+        margin: 0;
+        padding: 0;
+        overflow: none;
+        width: 100%;
+        height: 100%;
+    }
+
+    .swal2-title{
+        padding: 0;
+        color: var(--blue-royal-clr);
+        align-self: center;
+        font-size: 2vmax;
+    }    
+
+    .unlink__group{
+        height: 100%;
+        width: 100%;
+
+        display: flex;
+        flex-direction: column;
+        justify-content: space-evenly;
+        align-items: center;
+    }
+
+    .unlink__button{
+        all: unset;
+        width: 46vmin;
+        height: 8vmin;
+        border-radius: 5px;
+
+        font-size: 1vmax;
+        color: white;
+
+        display: grid;
+        grid-template-columns: 15% 1fr;
+        align-items: center;
+        justify-items: center;
+        padding-inline: 2vmin;
+        cursor: pointer;
+    }
+    
+    .swal2-actions{
+        flex-wrap: none; 
+        margin: 0; 
+    }
+
+    .swal2-cancel{
+        all: unset;
+        width: 50vmin;
+        height: 8vmin;
+        text-align: center;
+        border-radius: 5px;
+        background-color: #f2a007;
+        cursor: pointer;
+
+        font-size: 1vmax;
+        color: white;
+    }
+
+    .unlink--teacher{
+        background-color: var(--blue-royal-clr);
+    }
+
+    .unlink--student{
+        background-color: #17a2b8;
+    }
+
+    .unlink--user{
+        background-color: #6c757d;
+    }
+}
+
+
+.alert__edituser{
+    background-color: var(--white-smoke-clr);
+    width: 50vmax;
+    max-width: 50vmax;
+    grid-template-rows: 3vmax 1fr 3vmax;
+    gap: 1vmax;
+
+    .swal2-html-container{
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: fit-content;
+        display: flex !important;
+        flex-direction: column;
+        padding-inline: 1vmax;
+        gap: 1vmax;
+    }
+
+    .swal2-title{
+        padding: 0;
+        color: var(--blue-royal-clr);
+        align-self: center;
+        font-size: 2vmax;
+    }  
+
+    .edit__row{
+        height: 4.7vmax;
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        align-items: center;   
+        gap: 1vmax;
+    }
+
+    .edit__group{
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .edit__label{
+        font-size: 1.1vmax;
+        font-weight: 500;
+    }
+
+    .edit__input {
+        all: unset;
+        height: 3vmax;
+        width: 80%;
+        background-color: white;
+        box-shadow: 0px 4px 4px 1px rgba(0, 0, 0, 0.06);
+        border-radius: 5px;
+        cursor: text;
+        color: var(--primary-text-clr);
+        font-size: 0.9vmax;
+        font-weight: 500;
+        text-align: start;
+        padding-inline: 10%;
+    }
+
+    .edit__select {
+        all: unset;
+        display: flex;
+        height: 3vmax;
+        width: 80%;
+        background-color: white;
+        box-shadow: 0px 4px 4px 1px rgba(0, 0, 0, 0.06);
+        border-radius: 5px;
+        cursor: pointer;
+        color: var(--primary-text-clr);
+        font-size: 0.9vmax;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        text-align: start;
+        padding-inline: 10%;
+    }
+
+    .swal2-actions{
+        flex-wrap: none; 
+        margin: 0; 
+        display: flex;
+        gap: 1vmax;
+
+        button{
+            width: 16vmax;
+            height: 3vmax;
+            color: white;
+            border-radius: 5px;
+            font-size: 1vmax;
+            cursor: pointer;
+            margin: 0;
+        }
+    }
+
+    .edit__button{
+        all: unset;
+        width: 16vmax;
+        height: 3vmax;
+        background-color: var(--blue-royal-clr);
+        color: white;
+        border-radius: 5px;
+        font-size: 1vmax;
+        cursor: pointer;
+    }
+
+    .edit__courses{
+        display: flex;
+        flex-direction: column;
+        height: fit-content;
+        gap: 1vmax;
+    }
+
+    .courses__row{
+        display: flex; 
+        align-items: center; 
+        justify-content: space-between;
+        align-items: flex-end;
+    }
+
+    .edit__chart{
+        overflow-y: auto; 
+        border: 1px solid #e0e0e0; 
+        border-radius: 5px;
+    }
+    
+    .chart__table{
+        width: 100%; 
+        border-collapse: collapse;
+    }
+
+    .chart__row{
+        height: 4vmax;
+        background-color: #f5f5f5;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        align-items: center;
+        justify-items: center;
+        border-bottom: 1px solid #ddd; 
+    }
+
+    .chart__heading{
+        text-align: center;         
+        font-size: 1.1vmax;
+        font-weight: 500;
+    }
+
+    .chart__body{        
+        height: 4vmax;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chart__data{
+        font-size: 1vmax;
+        font-weight: 400;
+    }
+
+    .chart__button{
+        all: unset;
+        width: 2vmax;
+        height: 2vmax;
+        border-radius: 5px;
+        cursor: pointer;
+
+        font-size: 0.9vmax;
+        color: white;
+    }
+
+    .data__empty{
+        padding: 15px; text-align: center; 
+        border-bottom: 1px solid #eee; color: #777;
+    }
+
+    .buttons__group{
+        display: flex; 
+        justify-content: center; 
+        gap: 1vmax;        
+    }
+
+    .aqua{
+        background-color: #17a2b8;
+    }
+
+    .danger{
+        background-color: #ff6b6b;
+    }
+}
+
+.alert__details{
+    width: 70vmax;
+    max-width: 70vmax;   
+    display: grid;
+    grid-template-rows: 3vmax 1fr 3vmax;
+    gap: 1vmax;
+
+    .swal2-html-container{
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: fit-content;
+        display: flex !important;
+        flex-direction: column;
+        padding-inline: 1vmax;
+        gap: 1vmax;
+    }
+
+    .swal2-title{
+        padding: 0;
+        color: var(--blue-royal-clr);
+        align-self: center;
+        font-size: 2vmax;
+    }  
+
+    .details__title{
+        text-align: center; 
+        background-color: #f8f9fa; 
+        border-radius: 5px;
+        padding: 0.5vmax;
+
+        h3{
+            margin: 0; 
+            color: #2c3e50;
+            font-size: 1.2vmax;
+        }
+    }
+
+    .details__data{
+        display: grid; 
+        grid-template-columns: 1fr 1fr; 
+        align-items: center;
+        justify-items: start;
+        gap: 0.5vmax;
+
+        font-size: 1vmax;
+    }
+
+    .details__status{
+        padding: 0.5vmax; 
+        border-radius: 5px; 
+        text-align: center;
+        font-size: 1vmax;
+    }
+
+    .details__students{
+        display: flex; 
+        flex-direction: column; 
+        gap: 0.5vmax;
+    }
+
+    .details__header{
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center;
+
+        h3{
+            margin: 0; 
+            color: #2c3e50;
+            font-size: 1.2vmax;
+        }
+    }
+
+    .details__input {
+        all: unset;
+        height: 3vmax;
+        width: 40%;
+        background-color: white;
+        box-shadow: 0px 4px 4px 1px rgba(0, 0, 0, 0.06);
+        border-radius: 5px;
+        cursor: text;
+        color: var(--primary-text-clr);
+        font-size: 0.9vmax;
+        font-weight: 500;
+        text-align: start;
+        padding-inline: 5%;
+    }
+
+    .details__chart{
+        overflow-y: auto; 
+        border: 1px solid #e0e0e0; 
+        border-radius: 5px;
+    }
+
+    .details__table{
+        width: 100%; 
+        border-collapse: collapse;
+    }
+
+    .details__row{
+        height: 4vmax;
+        background-color: #f5f5f5;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        align-items: center;
+        justify-items: center;
+        border-bottom: 1px solid #ddd; 
+    }
+
+    .details__heading{
+        text-align: center;         
+        font-size: 1.1vmax;
+        font-weight: 500;
+    }
+
+    .details__body{
+        height: 4vmax;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .details__info{
+        font-size: 1vmax;
+        font-weight: 400;
+    }
+
+    .swal2-actions{
+        flex-wrap: none; 
+        margin: 0; 
+        display: flex;
+        gap: 1vmax;
+
+        button{
+            width: 16vmax;
+            height: 3vmax;
+            color: white;
+            border-radius: 5px;
+            font-size: 1vmax;
+            cursor: pointer;
+            margin: 0;
+        }
+    }
+}

@@ -344,7 +344,6 @@ const ProfessorStudents = () => {
                     confirmButtonText: 'Aceptar',
                     confirmButtonColor: '#3e8e41'
                   }).then(() => {
-                    descargarPDF(pdfBase64, "Credenciales_Generadas");
                     window.location.reload();
                   });
                 } else {
@@ -432,7 +431,6 @@ const ProfessorStudents = () => {
                     confirmButtonText: 'Aceptar',
                     confirmButtonColor: '#3e8e41'
                   }).then(() => {
-                    descargarPDF(pdfBase64, "Credenciales_Generadas");
                     window.location.reload();
                   });
                 } else {

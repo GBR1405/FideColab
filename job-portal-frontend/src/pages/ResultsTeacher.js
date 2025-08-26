@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import Cookies from "js-cookie";
+import Swal from "sweetalert2";
 import { jsPDF } from "jspdf";
 import "../styles/resultsTeacher.css";
 
@@ -173,7 +174,6 @@ function ResultsTeacher() {
   }, [partidaId]);
 
   const AchievementBadge = ({ logro }) => {
-  const [showTooltip, setShowTooltip] = useState(false);
   
   // Determinar el icono según el tipo de logro
   const getIcon = () => {
@@ -204,29 +204,42 @@ function ResultsTeacher() {
     return '#2a40bf'; // Azul por defecto
   };
 
+  const showAwardDescription = () => {
+    Swal.fire({
+      customClass: {
+        popup: 'award__description'
+      },
+      showConfirmButton: false,
+      showCloseButton: false,
+      html: 
+      `
+      <div class="description__icon">
+        <button class="award">
+          <div class="award__border" style="background-color: ${getBorderColor()};"></div>
+          <div class="award__body">
+            <i class="fa-solid ${getIcon()}"></i>
+          </div>
+        </button>
+      </div>      
+      <div class="award__title">
+        <h4>${logro.Nombre}</h4>
+      </div>
+      <div class="award__details">
+        <p>${logro.Descripcion}</p>
+      </div>  
+      `
+    });
+  }
+
   return (
-    <div 
-      className="award" 
-      onMouseEnter={() => setShowTooltip(true)}
-      onMouseLeave={() => setShowTooltip(false)}
-    >
-      <div 
-        className="award__border" 
-        style={{ backgroundColor: getBorderColor() }}
-      ></div>
+    <button className="award" onClick={showAwardDescription}>
+      <div className="award__border" style={{ backgroundColor: getBorderColor() }}></div>
       <div className="award__body">
         <i className={`fa-solid ${getIcon()}`}></i>
       </div>
       <div className="award__ribbon ribbon--left"></div>
       <div className="award__ribbon ribbon--right"></div>
-      
-      {showTooltip && (
-        <div className="achievement__tooltip">
-          <h4>{logro.Nombre}</h4>
-          <p>{logro.Descripcion}</p>
-        </div>
-      )}
-    </div>
+    </button>
   );
 };
 

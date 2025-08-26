@@ -178,9 +178,11 @@ CREATE TABLE Usuario_Logros_TB (
   Logro_ID_FK INT NOT NULL,
   FechaObtenido DATETIME DEFAULT GETDATE(),
   Partida_ID_FK INT,
-  UNIQUE (Usuario_ID_FK, Logro_ID_FK)
+  UNIQUE (Usuario_ID_FK, Logro_ID_FK),   -- ← aquí faltaba la coma
+
+  FOREIGN KEY (Usuario_ID_FK) REFERENCES Usuario_TB(Usuario_ID_PK),
+  FOREIGN KEY (Logro_ID_FK) REFERENCES Logros_TB(Logro_ID_PK)
 );
- 
 -- Tabla Bitacora - REVISADO
 
 CREATE TABLE Bitacora_TB (

@@ -598,20 +598,14 @@
   }
 }
 
-/* En tu archivo CSS */
-.demo-modal-container {
-  z-index: 99999 !important;
-}
-
 .time-up-alert {
-  z-index: 9999 !important; /* Menor que el demo */
+  z-index: 100 !important; 
 }
 
 .swal2-container {
-  z-index: 9999 !important;
+  z-index: 100 !important;
 }
 
-/* Asegurar que el backdrop del SweetAlert no interfiera */
 .swal2-backdrop-show {
-  z-index: 9998 !important;
+  z-index: 100 !important;
 }

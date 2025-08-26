@@ -110,7 +110,6 @@ function Profile() {
   return (
     <Layout>
       <section className="main__container_PF">
-        {/* Sección superior - Información del usuario */}
         <div className="container__top_PF">
           <div className="top__image_PF">
             <img

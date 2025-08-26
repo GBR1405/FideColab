@@ -6,9 +6,8 @@ export const processFileMiddleware = async (file) => {
     const workbook = XLSX.read(fileBuffer, { type: "array" });
 
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 }); // Matriz de arrays
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 }); 
 
-    // Buscar la fila donde están los encabezados reales
     const headerIndex = rows.findIndex(row =>
       row[0] === "Nombre" &&
       row[1] === "Apellido1" &&
@@ -20,16 +19,15 @@ export const processFileMiddleware = async (file) => {
       throw new Error("No se encontró encabezado válido en la plantilla.");
     }
 
-    // Obtener datos debajo de la fila de encabezado
     const profesores = rows
       .slice(headerIndex + 1)
-      .filter(row => row.length >= 4 && row[0]) // evitar vacíos
+      .filter(row => row.length >= 4 && row[0])
       .map(row => ({
         name: row[0].trim(),
         lastName1: row[1].trim(),
         lastName2: row[2].trim(),
         email: row[3].trim(),
-        gender: "3" // Fijado como pediste
+        gender: "3" 
       }));
 
     return profesores;

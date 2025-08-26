@@ -295,9 +295,7 @@ const DrawingDemoModal = ({ partidaId, isProfessor, onClose }) => {
   if (!isActive && !isProfessor) return null;
 
   return (
-    <div className="demo-modal-container" style={{
-      zIndex: 99999, // Valor muy alto
-    }}>
+    <div className="demo-modal-container">
     <div className="demo-modal-overlay">
       <div className="demo-modal-container">
         <div className="demo-header">

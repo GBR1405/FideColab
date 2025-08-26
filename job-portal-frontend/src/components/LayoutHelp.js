@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "../styles/help.css";
+import "../styles/animationRecharge.css";
 
 const LayoutHelp = ({ children, userData }) => {
   const navigate = useNavigate();

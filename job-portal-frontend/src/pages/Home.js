@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getRole, isAuthenticated } from "../LN/UtilsAuth"; // Importamos las funciones
+import { getRole, isAuthenticated } from "../LN/UtilsAuth"; 
 
 const AuthRedirect = () => {
   const navigate = useNavigate();

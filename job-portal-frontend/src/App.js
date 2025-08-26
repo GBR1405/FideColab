@@ -13,6 +13,9 @@ import { SocketProvider } from './context/SocketContext';
 import FullScreenLoader from "./components/FullScreenLoader";
 import DelayedSuspense from "./components/DelayedSuspense";
 
+import AccessibilityWidget from "./components/AccessibilityWidget.jsx";
+
+
 window.addEventListener("error", (e) => {
   if (e?.message?.includes("ChunkLoadError") || e?.message?.includes("Loading chunk")) {
     console.warn("⚠️ Error de carga de chunk detectado. Recargando...");
@@ -89,6 +92,7 @@ const App = () => {
   return (
     <DelayedSuspense fallback={<FullScreenLoader />} minDuration={1200}>
       <SocketProvider>
+        <AccessibilityWidget />
       <Routes>
       
         {/* Rutas públicas */}

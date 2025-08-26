@@ -686,108 +686,104 @@ const handleResetSystem = async () => {
 
   // Add new user
   const handleAddUser = async () => {
-    const { value: formValues } = await Swal.fire({
-      title: 'Agregar Nuevo Usuario',
-      html: `
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-          <input id="swal-input1" class="swal2-input" placeholder="Nombre" required>
-          <input id="swal-input2" class="swal2-input" placeholder="Primer Apellido" required>
-          <input id="swal-input3" class="swal2-input" placeholder="Segundo Apellido" required>
-        </div>
-        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px; margin-bottom: 10px;">
-          <input id="swal-input4" class="swal2-input" placeholder="Correo electrónico" type="email" required>
-          <select id="swal-input5" class="swal2-input" style="width: 100%;" required>
-            <option value="">Género</option>
-            <option value="1">Masculino</option>
-            <option value="2">Femenino</option>
-            <option value="3">Otro</option>
-          </select>
-        </div>
-        <select id="swal-input6" class="swal2-input" required>
+  const { value: formValues } = await Swal.fire({
+    title: 'Agregar Nuevo Usuario',
+    customClass: { popup: 'alert__add' },
+    html: `
+      <div class="add__form">
+        <input id="swal-input1" class="add__input" placeholder="Nombre" required>
+        <input id="swal-input2" class="add__input" placeholder="Primer Apellido" required>
+        <input id="swal-input3" class="add__input" placeholder="Segundo Apellido" required>
+        <input id="swal-input4" class="add__input" placeholder="Correo electrónico" type="email" required>
+        <select id="swal-input5" class="add__select">
+          <option value="">Género</option>
+          <option value="1">Masculino</option>
+          <option value="2">Femenino</option>
+          <option value="3">Otro</option>
+        </select>
+        <select id="swal-input6" class="add__select" required>
           <option value="">Seleccione Rol</option>
           <option value="Profesor">Profesor</option>
           <option value="Estudiante">Estudiante</option>
           <option value="Administrador">Administrador</option>
         </select>
-      `,
-      width: '700px',
-      focusConfirm: false,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      showCancelButton: true,
-      confirmButtonText: 'Agregar',
-      cancelButtonText: 'Cancelar',
-      preConfirm: () => {
-        const nombre = document.getElementById('swal-input1').value;
-        const apellido1 = document.getElementById('swal-input2').value;
-        const apellido2 = document.getElementById('swal-input3').value;
-        const correo = document.getElementById('swal-input4').value;
-        const genero = document.getElementById('swal-input5').value;
-        const rol = document.getElementById('swal-input6').value;
+      </div>        
+    `,
+    focusConfirm: false,
+    confirmButtonColor: '#1935ca',
+    cancelButtonColor: '#f2a007',
+    showCancelButton: true,
+    confirmButtonText: 'Agregar',
+    cancelButtonText: 'Cancelar',
+    preConfirm: async () => {
+      const nombre = document.getElementById('swal-input1').value.trim();
+      const apellido1 = document.getElementById('swal-input2').value.trim();
+      const apellido2 = document.getElementById('swal-input3').value.trim();
+      const correo = document.getElementById('swal-input4').value.trim();
+      const genero = document.getElementById('swal-input5').value;
+      const rol = document.getElementById('swal-input6').value;
 
-        if (!nombre || !apellido1 || !apellido2 || !correo || !genero || !rol) {
-          Swal.showValidationMessage('Todos los campos son obligatorios');
-          return false;
-        }
-
-        if (rol === 'Administrador') {
-          return Swal.fire({
-            title: 'Confirmación requerida',
-            text: 'Para crear un usuario administrador, ingrese el código de seguridad',
-            input: 'text',
-            inputPlaceholder: 'Código de seguridad',
-            width: '600px',
-            showCancelButton: true,
-            confirmButtonText: 'Confirmar',
-            cancelButtonText: 'Cancelar',
-            confirmButtonColor: '#3085d6',
-            preConfirm: (code) => {
-              if (code !== 'fidecolab') {
-                Swal.showValidationMessage('Código incorrecto');
-                return false;
-              }
-              return { nombre, apellido1, apellido2, correo, genero, rol };
-            }
-          });
-        }
-
-        return { nombre, apellido1, apellido2, correo, genero, rol };
+      if (!nombre || !apellido1 || !apellido2 || !correo || !genero || !rol) {
+        Swal.showValidationMessage('Todos los campos son obligatorios');
+        return false;
       }
+
+      // 🔑 Si es administrador, pedimos el código ANTES de devolver el objeto
+      if (rol === 'Administrador') {
+        const { value: code } = await Swal.fire({
+          title: 'Confirmación requerida',
+          text: 'Para crear un usuario administrador, ingrese el código de seguridad',
+          input: 'text',
+          inputPlaceholder: 'Código de seguridad',
+          width: '600px',
+          showCancelButton: true,
+          confirmButtonText: 'Confirmar',
+          cancelButtonText: 'Cancelar',
+          confirmButtonColor: '#3085d6',
+          preConfirm: (code) => {
+            if (code !== 'fidecolab') {
+              Swal.showValidationMessage('Código incorrecto');
+              return false;
+            }
+            return code;
+          }
+        });
+
+        if (!code) return false; // canceló
+      }
+
+      // 🔥 devolver objeto correcto
+      return { nombre, apellido1, apellido2, correo, genero: parseInt(genero, 10), rol };
+    }
+  });
+
+  if (!formValues) return;
+
+  console.log("Agregando usuario:", formValues);
+
+  try {
+    const apiUrl = process.env.REACT_APP_API_URL;
+    const response = await fetch(`${apiUrl}/usuarios_D`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(formValues)
     });
 
-    if (!formValues) return;
+    if (!response.ok) throw new Error('Error al agregar usuario');
 
-    try {
-      const apiUrl = process.env.REACT_APP_API_URL;
-      const response = await fetch(`${apiUrl}/usuarios_D`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          nombre: formValues.nombre,
-          apellido1: formValues.apellido1,
-          apellido2: formValues.apellido2,
-          correo: formValues.correo,
-          rol: formValues.rol,
-          genero: formValues.genero
-        })
-      });
+    await response.json();
+    Swal.fire('Éxito', 'Usuario agregado correctamente, se le envió un correo al usuario con su contraseña', 'success');
+    fetchUsers();
+  } catch (error) {
+    console.error("Error al agregar usuario:", error);
+    Swal.fire('Error', 'No se pudo agregar el usuario', 'error');
+  }
+};
 
-      if (!response.ok) {
-        throw new Error('Error al agregar usuario');
-      }
-
-      await response.json();
-      Swal.fire('Éxito', 'Usuario agregado correctamente, se le envio un correo al usuario con su contraseña', 'success');
-      fetchUsers();
-    } catch (error) {
-      console.error("Error al agregar usuario:", error);
-      Swal.fire('Error', 'No se pudo agregar el usuario', 'error');
-    }
-  };
 
   const handleDeleteItem = (itemType, id) => {
     Swal.fire({
@@ -838,75 +834,45 @@ const handleResetSystem = async () => {
       (user.Rol === 'Estudiante' && userGroups.length === 0)
     );
 
-    // Estilos CSS para los botones
-    const buttonStyle = `
-      align-items: center;
-      background-color: #f2a007;
-      border-radius: 5px;
-      box-shadow: 0 4px 4px 1px rgba(0, 0, 0, 0.06);
-      color: #fff;
-      cursor: pointer;
-      display: flex;
-      font-size: 14px;
-      font-weight: 500;
-      height: 36px;
-      justify-content: center;
-      padding: 0 12px;
-      text-align: center;
-      border: none;
-      transition: all 0.3s ease;
-    `;
-
-    const dangerButtonStyle = `
-      ${buttonStyle}
-      background-color: #ff6b6b;
-    `;
-
-    const secondaryButtonStyle = `
-      ${buttonStyle}
-      background-color: #6c757d;
-    `;
-
     // Crear el HTML para la tabla de grupos
     const groupsTableHtml = !isAdmin ? `
-      <div style="margin: 15px 0;">
-        <h4 style="margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
-          <span style="font-size: 16px; font-weight: 600;">Cursos Vinculados</span>
+      <div class="edit__courses">
+        <div class="courses__row">
+          <span class="edit__label">Cursos Vinculados</span>
           ${showAddCourseBtn ? `
-            <button id="add-course-btn" style="${buttonStyle}">
-              <i class="fa-solid fa-plus" style="margin-right: 5px;"></i> Agregar Curso
+            <button id="add-course-btn" class="edit__button">
+              <i class="fa-solid fa-plus"></i> Agregar Curso
             </button>
           ` : ''}
-        </h4>
-        <div style="max-height: 200px; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 5px;">
-          <table style="width: 100%; border-collapse: collapse;">
+        </div>
+        <div class="edit__chart">
+          <table class="chart__table">
             <thead>
-              <tr style="background-color: #f5f5f5;">
-                <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd; font-weight: 500;">Código</th>
-                <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd; font-weight: 500;">Nombre</th>
-                <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd; font-weight: 500;">Grupo</th>
-                <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd; font-weight: 500;">Acciones</th>
+              <tr class="chart__row">
+                <th class="chart__heading">Código</th>
+                <th class="chart__heading">Nombre</th>
+                <th class="chart__heading">Grupo</th>
+                <th class="chart__heading">Acciones</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody class="chart__body">
               ${userGroups.length > 0 ?
-        userGroups.map(group => `
-                  <tr>
-                    <td style="padding: 10px; border-bottom: 1px solid #eee;">${group.codigo}</td>
-                    <td style="padding: 10px; border-bottom: 1px solid #eee;">${group.nombre}</td>
-                    <td style="padding: 10px; border-bottom: 1px solid #eee;">G${group.grupo}</td>
-                    <td style="padding: 10px; border-bottom: 1px solid #eee;">
+                userGroups.map(group => `
+                  <tr class="chart__row">
+                    <td class="chart__data">${group.codigo}</td>
+                    <td class="chart__data">${group.nombre}</td>
+                    <td class="chart__data">G${group.grupo}</td>
+                    <td class="chart__data">
                       <button 
                         data-group-id="${group.id}"
-                        class="unlink-course-btn" 
-                        style="${dangerButtonStyle} padding: 5px 8px; width: auto;">
-                        <i class="fa-solid fa-link-slash" style="margin-right: 5px;"></i>
+                        class="chart__button danger">
+                        <i class="fa-solid fa-link-slash"></i>
                       </button>
                     </td>
                   </tr>
                 `).join('') : `
                   <tr>
-                    <td colspan="4" style="padding: 15px; text-align: center; border-bottom: 1px solid #eee; color: #777;">
+                    <td colspan="4" class="data__empty">
                       No hay cursos vinculados
                     </td>
                   </tr>
@@ -919,104 +885,90 @@ const handleResetSystem = async () => {
 
     // Crear el HTML para los botones de acciones especiales
     const specialActionsHtml = !isAdmin ? `
-      <div style="margin-top: 20px; display: flex; justify-content: space-between; gap: 10px;">
+      <div class="buttons__group">
         ${user.Rol === 'Profesor' ? `
-          <button id="delete-customizations-btn" style="${dangerButtonStyle} width: 100%;">
-            <i class="fa-solid fa-trash" style="margin-right: 5px;"></i> Eliminar Personalizaciones
+          <button id="delete-customizations-btn" class="edit__button danger">
+            <i class="fa-solid fa-trash"></i> Eliminar Personalizaciones
           </button>
-          <button id="delete-matches-btn" style="${dangerButtonStyle} width: 100%;">
-            <i class="fa-solid fa-gamepad" style="margin-right: 5px;"></i> Eliminar Partidas
+          <button id="delete-matches-btn" class="edit__button danger">
+            <i class="fa-solid fa-gamepad"></i> Eliminar Partidas
           </button>
         ` : ''}
         ${user.Rol === 'Estudiante' ? `
-          <button id="reset-achievements-btn" style="${dangerButtonStyle} width: 100%;">
-            <i class="fa-solid fa-trophy" style="margin-right: 5px;"></i> Reiniciar Logros
+          <button id="reset-achievements-btn" class="edit__button danger">
+            <i class="fa-solid fa-trophy"></i> Reiniciar Logros
           </button>
         ` : ''}
       </div>
     ` : '';
 
-    // Estilo para los selects
-    const selectStyle = `
-      width: 100%;
-      padding: 10px;
-      border-radius: 5px;
-      border: 1px solid #ddd;
-      font-size: 14px;
-      background-color: white;
-      color: #333;
-    `;
-
     const { value: formValues, isConfirmed } = await Swal.fire({
       title: `Editar Usuario ${user.Nombre}`,
+      customClass: {
+        popup: 'alert__edituser'
+      },
       html: `
-            <style>
-          .swal2-input, .swal2-select {
-            margin: 0 !important;
-          }
-        </style>
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-          <div>
-            <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #555;">Nombre</label>
-            <input id="swal-input1" class="swal2-input" placeholder="Nombre" value="${user.Nombre}" required
-              style="${selectStyle}">
+        <div class="edit__row">
+          <div class="edit__group">
+            <label class="edit__label">Nombre</label>
+            <input class="edit__input" id="swal-input1" placeholder="Nombre" value="${user.Nombre}" required>
           </div>
-          <div>
-            <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #555;">Primer Apellido</label>
-            <input id="swal-input2" class="swal2-input" placeholder="Primer Apellido" value="${user.Apellido1}" required
-              style="${selectStyle}">
+          <div class="edit__group">
+            <label class="edit__label">Primer Apellido</label>
+            <input class="edit__input" id="swal-input2" placeholder="Primer Apellido" value="${user.Apellido1}" required>
           </div>
-          <div>
-            <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #555;">Segundo Apellido</label>
-            <input id="swal-input3" class="swal2-input" placeholder="Segundo Apellido" value="${user.Apellido2}" required
-              style="${selectStyle}">
+          <div class="edit__group">
+            <label class="edit__label">Segundo Apellido</label>
+            <input class="edit__input" id="swal-input3" class="swal2-input" placeholder="Segundo Apellido" value="${user.Apellido2}" required>
           </div>
         </div>
-        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px; margin-bottom: 15px;">
-          <div>
-            <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #555;">Correo</label>
-            <input id="swal-input4" class="swal2-input" placeholder="Correo" value="${user.Correo}" disabled
-              style="${selectStyle}">
-          </div>
-          <div>
-            <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #555;">Género</label>
-            <select id="swal-input5" style="${selectStyle}" required>
+        <div class="edit__row">
+          <div class="edit__group">
+            <label class="edit__label">Género</label>
+            <select class="edit__select" id="swal-input5" required>
               <option value="3">Indefinido</option>
-              <option value="1" ${user.Genero == '1' ? 'selected' : ''}>Masculino</option>
-              <option value="2" ${user.Genero == '2' ? 'selected' : ''}>Femenino</option>
+              <option value="1" ${user.Genero === '1' ? 'selected' : ''}>Masculino</option>
+              <option value="2" ${user.Genero === '2' ? 'selected' : ''}>Femenino</option>
             </select>
+          </div>
+          <div class="edit__group">
+            <label class="edit__label">Rol</label>
+            ${
+              user.Rol === 'Administrador'
+                ? `
+                  <select class="edit__select" id="swal-input6" disabled>
+                    <option value="Administrador" selected>Administrador</option>
+                  </select>
+                `
+                : `
+                  <select class="edit__select" id="swal-input6" required>
+                    <option value="Profesor" ${user.Rol === 'Profesor' ? 'selected' : ''}>Profesor</option>
+                    <option value="Estudiante" ${user.Rol === 'Estudiante' ? 'selected' : ''}>Estudiante</option>
+                  </select>
+                `
+            }
           </div>
         </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-          <div>
-            <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #555;">Rol</label>
-            <select id="swal-input6" style="${selectStyle}" required>
-              <option value="Administrador" ${user.Rol === 'Administrador' ? 'selected' : ''}>Administrador</option>
-              <option value="Profesor" ${user.Rol === 'Profesor' ? 'selected' : ''}>Profesor</option>
-              <option value="Estudiante" ${user.Rol === 'Estudiante' ? 'selected' : ''}>Estudiante</option>
-            </select>
-          </div>
-          <div>
-            <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #555;">Acciones</label>
-            <button id="reset-password-btn" style="${secondaryButtonStyle} width: 100%;">
-              <i class="fa-solid fa-key" style="margin-right: 5px;"></i> Restaurar Contraseña
+        <div class="edit__row">        
+          <div class="edit__group">
+            <label class="edit__label">Correo</label>
+            <input class="edit__input" id="swal-input4" class="swal2-input" placeholder="Correo" value="${user.Correo}" disabled>
+          </div>    
+          <div class="edit__group">
+            <label class="edit__label">Acciones</label>
+            <button id="reset-password-btn" class="edit__button aqua">
+              <i class="fa-solid fa-key"></i> Restaurar Contraseña
             </button>
           </div>
         </div>
         ${groupsTableHtml}
-        ${specialActionsHtml}
+        ${specialActionsHtml}        
       `,
-      width: '1100px',
       focusConfirm: false,
       confirmButtonText: 'Guardar cambios',
       cancelButtonText: 'Cancelar',
       showDenyButton: true,
       denyButtonText: 'Descartar cambios',
-      customClass: {
-        confirmButton: 'custom-confirm-button',
-        cancelButton: 'custom-cancel-button',
-        denyButton: 'custom-deny-button'
-      },
       preConfirm: () => {
         const nombre = document.getElementById('swal-input1').value;
         const apellido1 = document.getElementById('swal-input2').value;
@@ -1501,83 +1453,66 @@ const handleResetSystem = async () => {
 
       // Build HTML content based on user role
       let detailsContent = `
-        <div style="display: flex; flex-direction: column; gap: 20px;">
-          <div style="text-align: center; background-color: #f8f9fa; padding: 10px; border-radius: 5px;">
-            <h3 style="margin: 0; color: #2c3e50;">Información Básica</h3>
-          </div>
-          
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-            <div>
-              <p><strong>Nombre completo:</strong> ${user.Nombre} ${user.Apellido1} ${user.Apellido2 || ''}</p>
-              <p><strong>Correo:</strong> ${user.Correo}</p>
-            </div>
-            <div>
-              <p><strong>Género:</strong> ${user.Genero === '1' ? 'Masculino' : user.Genero === '2' ? 'Femenino' : 'Otro'}</p>
-              <p><strong>Rol:</strong> ${user.Rol}</p>
-            </div>
-          </div>
-          
-          <div style="background-color: ${user.Estado ? '#d4edda' : '#f8d7da'}; 
-                      color: ${user.Estado ? '#155724' : '#721c24'}; 
-                      padding: 10px; 
-                      border-radius: 5px; 
-                      text-align: center;">
-            <strong>Estado:</strong> ${user.Estado ? 'Activo' : 'Inactivo'}
-          </div>
+        <div class="details__title">
+          <h3>Información Básica</h3>
+        </div>
+        
+        <div class="details__data">
+          <p><strong>Nombre:</strong> ${user.Nombre} ${user.Apellido1} ${user.Apellido2 || ''}</p>
+          <p><strong>Correo:</strong> ${user.Correo}</p>
+          <p><strong>Género:</strong> ${user.Genero === '1' ? 'Masculino' : user.Genero === '2' ? 'Femenino' : 'Otro'}</p>
+          <p><strong>Rol:</strong> ${user.Rol}</p>
+        </div>
+        
+        <div class="details__status"
+             style="background-color: ${user.Estado ? '#d4edda' : '#f8d7da'}; color: ${user.Estado ? '#155724' : '#721c24'};">
+          <strong>Estado:</strong> ${user.Estado ? 'Activo' : 'Inactivo'}
+        </div>
       `;
 
       if (user.Rol === 'Estudiante') {
         detailsContent += `
-          <div style="text-align: center; background-color: #f8f9fa; padding: 10px; border-radius: 5px;">
-            <h3 style="margin: 0; color: #2c3e50;">Estadísticas</h3>
+          <div class="details__title">
+            <h3>Estadísticas</h3>
           </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-            <div>
-              <p><strong>Partidas jugadas:</strong> ${userDetails.totalPartidas || 0}</p>
-            </div>
-            <div>
-              <p><strong>Cursos vinculados:</strong> ${userDetails.cursos || 'Ninguno'}</p>
-            </div>
+          <div class="details__data">
+            <p><strong>Partidas jugadas:</strong> ${userDetails.totalPartidas || 0}</p>
+            <p><strong>Cursos vinculados:</strong> ${userDetails.cursos || 'Ninguno'}</p>
           </div>
         `;
       } else if (user.Rol === 'Profesor') {
         detailsContent += `
-          <div style="text-align: center; background-color: #f8f9fa; padding: 10px; border-radius: 5px;">
-            <h3 style="margin: 0; color: #2c3e50;">Estadísticas</h3>
+          <div class="details__title">
+            <h3>Estadísticas</h3>
           </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-            <div>
-              <p><strong>Personalizaciones activas:</strong> ${userDetails.totalPersonalizaciones || 0}</p>
-            </div>
-            <div>
-              <p><strong>Cursos que imparte:</strong> ${userDetails.cursos || 'Ninguno'}</p>
-            </div>
+          <div class="details__data">
+            <p><strong>Personalizaciones activas:</strong> ${userDetails.totalPersonalizaciones || 0}</p>
+            <p><strong>Cursos que imparte:</strong> ${userDetails.cursos || 'Ninguno'}</p>
           </div>
         `;
 
         if (userDetails.estudiantes && userDetails.estudiantes.length > 0) {
           detailsContent += `
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h3 style="margin: 0; color: #2c3e50;">Estudiantes Vinculados</h3>
-                <input type="text" id="student-search" placeholder="Buscar estudiante..." 
-                      style="padding: 5px; border-radius: 4px; border: 1px solid #ddd;">
+            <div class="details__students">
+              <div class="details__header">
+                <h3>Estudiantes Vinculados</h3>
+                <input class="details__input" type="text" id="student-search" placeholder="Buscar estudiante...">
               </div>
-              <div style="max-height: 300px; overflow-y: auto;">
-                <table style="width: 100%; border-collapse: collapse;">
+              <div class="details__chart">
+                <table class="details__table">
                   <thead>
-                    <tr style="background-color: #17a2b8; color: white;">
-                      <th style="padding: 10px; border: 1px solid #ddd;">Nombre</th>
-                      <th style="padding: 10px; border: 1px solid #ddd;">Correo</th>
-                      <th style="padding: 10px; border: 1px solid #ddd;">Curso</th>
+                    <tr class="details__row" style="background-color: #17a2b8; color: white;">
+                      <th class="details__heading">Nombre</th>
+                      <th class="details__heading">Correo</th>
+                      <th class="details__heading">Curso</th>
                     </tr>
                   </thead>
-                  <tbody id="student-table-body">
+                  <tbody class="details__body" id="student-table-body">
                     ${userDetails.estudiantes.map(estudiante => `
-                      <tr>
-                        <td style="padding: 8px; border: 1px solid #ddd;">${estudiante.Nombre} ${estudiante.Apellido1} ${estudiante.Apellido2 || ''}</td>
-                        <td style="padding: 8px; border: 1px solid #ddd;">${estudiante.Correo}</td>
-                        <td style="padding: 8px; border: 1px solid #ddd;">${estudiante.Nombre_Curso} G${estudiante.Codigo_Grupo}</td>
+                      <tr class="details__row">
+                        <td class="details__info">${estudiante.Nombre} ${estudiante.Apellido1} ${estudiante.Apellido2 || ''}</td>
+                        <td class="details__info">${estudiante.Correo}</td>
+                        <td class="details__info">${estudiante.Nombre_Curso} G${estudiante.Codigo_Grupo}</td>
                       </tr>
                     `).join('')}
                   </tbody>
@@ -1617,10 +1552,11 @@ const handleResetSystem = async () => {
         `;
       }
 
-      detailsContent += `</div>`;
-
       Swal.fire({
         title: `Detalles de ${user.Nombre}`,
+        customClass: {
+          popup: 'alert__details'
+        },
         html: detailsContent,
         width: '900px',
         confirmButtonText: 'Cerrar',
@@ -1653,24 +1589,25 @@ const handleResetSystem = async () => {
   const handleUnlinkUsers = () => {
     Swal.fire({
       title: 'Desvincular Usuarios',
+      customClass: {
+        popup: 'alert__unlink'
+      },
       html: `
-        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-          <button id="professors-btn" class="swal2-button swal2-confirm" style="background-color: #ffc107; color: #000; flex: 1; margin-right: 10px;">
+        <div class="unlink__group">
+          <button id="professors-btn" class="unlink__button unlink--teacher">
             <i class="fa-solid fa-user-tie"></i> Desvincular Profesores
           </button>
-          <button id="students-btn" class="swal2-button swal2-confirm" style="background-color: #17a2b8; color: #fff; flex: 1;">
+          <button id="students-btn" class="unlink__button unlink--student">
             <i class="fa-solid fa-user-graduate"></i> Desvincular Estudiantes
           </button>
+          <button id="all-users-btn" class="unlink__button unlink--user">
+            <i class="fa-solid fa-users-slash"></i> Desvincular Todos los Usuarios
+          </button>
         </div>
-        <button id="all-users-btn" class="swal2-button swal2-deny" style="background-color: #6c757d; color: #fff; width: 100%;">
-          <i class="fa-solid fa-users-slash"></i> Desvincular Todos los Usuarios
-        </button>
       `,
-      width: '700px',
       showConfirmButton: false,
       showCancelButton: true,
       cancelButtonText: 'Cancelar',
-      cancelButtonColor: '#d33',
       willOpen: () => {
         document.getElementById('professors-btn').addEventListener('click', () => {
           Swal.fire('Éxito', 'Todos los profesores han sido desvinculados', 'success');
